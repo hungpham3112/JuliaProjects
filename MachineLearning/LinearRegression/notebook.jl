@@ -4,106 +4,141 @@
 using Markdown
 using InteractiveUtils
 
+# This Pluto notebook uses @bind for interactivity. When running this notebook outside of Pluto, the following 'mock version' of @bind gives bound variables a default value (instead of an error).
+macro bind(def, element)
+    quote
+        local iv = try Base.loaded_modules[Base.PkgId(Base.UUID("6e696c72-6542-2067-7265-42206c756150"), "AbstractPlutoDingetjes")].Bonds.initial_value catch; b -> missing; end
+        local el = $(esc(element))
+        global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : iv(el)
+        el
+    end
+end
+
 # ╔═╡ 85b2d40f-9b6c-441c-bf6f-837b1ffcd40d
-import Pkg; Pkg.resolve(); Pkg.update()
+import Pkg; Pkg.resolve(); Pkg.update();
 
 # ╔═╡ 449e934d-91c6-4569-bf81-5168a61d46ff
-using DataFrames, CSV
-
-# ╔═╡ c17ece68-9e8d-45a8-96a7-f4391fda5897
-using Plots, StatsPlots
+using DataFrames, CSV, DataFramesMeta, HTTP, PlutoUI, StatsBase, Plots, StatsPlots;
 
 # ╔═╡ a19b6a65-5675-40cd-9b8c-d7ed5b10eae8
-using GLM
+using GLM, TypedTables
+
+# ╔═╡ c01f2140-03aa-4f4f-9527-308263ebabb1
+md"""
+# Predict the housing price with Linear Regression
+"""
 
 # ╔═╡ bd7f95cf-994e-4e03-93a8-0add0826f4c5
 md"""
-# Loading Dataset
+## Loading Dataset
 """
 
+# ╔═╡ ada5ae54-acda-4c98-9c46-3194a7528961
+url = raw"https://raw.githubusercontent.com/hungpham3112/JuliaProjects/main/MachineLearning/LinearRegression/VN_housing_dataset.csv"
+
 # ╔═╡ 7b07a558-f478-4124-85cc-7896415229bd
-df = CSV.read("VN_housing_dataset.csv", DataFrame)
+raw_df = CSV.read(HTTP.get(url).body, DataFrame)
 
 # ╔═╡ 3fefbdc5-d0fa-4b19-82f3-e41a36560fa8
-size(df)
-
-# ╔═╡ 0614e56e-ff63-439d-aed6-151a5d1c161e
-describe(df)
+size(raw_df)
 
 # ╔═╡ 952673f4-6171-4a2d-87c9-4bd8311f4afb
 md"""
-# Cleaning Data
+## Data Preparation
 """
 
-# ╔═╡ c282d1d1-fd38-48c6-adf9-57b0860836d4
-# Extract columns
-names(df)
+# ╔═╡ 0614e56e-ff63-439d-aed6-151a5d1c161e
+describe(raw_df)
 
 # ╔═╡ e2a5efd1-6927-4ac1-9eaa-72c9eb13af98
-renamed_df = rename(df, Dict("Diện tích" => "Area", "Giá/m2" => "Price/m2"))
+rename!(raw_df, Dict("Diện tích" => "area", "Giá/m2" => "price_per_square", "Quận" => "district"))
 
-# ╔═╡ d412386e-b1af-4259-859b-babc8ef87e70
-begin
-	renamed_df[:, :Area] = replace(renamed_df[:, :Area], "NaN" => missing)
-	renamed_df[:, "Price/m2"] = replace(renamed_df[:, "Price/m2"], "NaN" => missing)
-	removed_missing_df = dropmissing(renamed_df[:, ["Area", "Price/m2"]])
+# ╔═╡ b3f1a018-e129-4507-9363-ccdf8f1b80ce
+sub_df = @chain raw_df begin
+	# remove missing value
+    dropmissing 
+	# Extract Hoang mai district and remove "NaN" in price_per_square
+    @rsubset occursin("Hoàng Mai", :district) && !occursin("NaN", :price_per_square)
+	# Select only 2 columns from df
+    @select :area :price_per_square
 end
 
-# ╔═╡ 87fd91a6-fff6-46bb-87bc-256862d9be57
-# Extract number in Area
-removed_missing_df[:, "Area"] = map(content -> filter(c -> isdigit(c), content), removed_missing_df[:, "Area"])
-
-# ╔═╡ b0447b5d-ec17-4dd8-a1b8-1b150006f44b
-begin
-	# Extract number in Price/m2
-	comma_to_dot_column = map(x -> replace(x, "," => "."), removed_missing_df[:, "Price/m2"])
-	removed_missing_df[:, "Price/m2"] = map(content -> match(r"[+-]?\d+(\.\d+)?", content).match, comma_to_dot_column)
+# ╔═╡ aa7303c6-3a7e-45c1-ad64-ed7c65e867e0
+string_number_df = @rtransform sub_df begin
+	:area = filter(c -> isdigit(c), :area)
+	:price_per_square = match(r"[+-]?\d+(\.\d+)?", replace(:price_per_square, "," => ".")).match
 end
 
-# ╔═╡ 416a643b-e2ca-4d2f-af07-5dcc9bcb188c
-transformed_df = transform(removed_missing_df, [:Area, :"Price/m2"] .=> ( x -> parse.(Float64,x) ) .=> [:Area, "Price/m2"])
+# ╔═╡ 119cda78-06d7-40b2-b9d7-fd6d06a81fda
+float_df = @rtransform string_number_df begin
+	:area = parse(Float64, :area)
+	:price_per_square = parse(Float64, :price_per_square)
+end
 
 # ╔═╡ cd19344e-3a89-4f67-8164-a692af1fac45
-transformed_df[!, :Price] = transformed_df[!, :"Price/m2"] .* transformed_df[!, :Area]
+# Create new table from transformed_df
+formatted_df = @chain float_df begin
+    
+    # Add "price" column
+    @rtransform :price = :area * :price_per_square / 1000
+    
+    # Select only area and price columns
+    @select :area :price
+    
+end
 
-# ╔═╡ 48314e4f-b98e-49cd-a86e-240e212dea3e
-table = select(transformed_df, Not(:"Price/m2"))
-
-# ╔═╡ fe335996-4c13-456d-8120-12df85edde09
-size(table)
-
-# ╔═╡ cd5bfdd5-af6a-45e0-a279-10f504af72ab
-extrema(table[!, :Area])
-
-# ╔═╡ 9592810e-41e6-4f7f-b67e-781cdab61b6b
-describe(table)
-
-# ╔═╡ f43c15c8-1d6b-4f4d-b36a-56f2f189ffad
-count(x -> x >= 10_000, table[:, :Area])
-
-# ╔═╡ d9763dcb-7f2f-4727-b8f0-7ec8a10f5d30
-count(x -> x > 1_000_000, table[:, :Price])
-
-# ╔═╡ c38753ba-5f2d-4b31-be77-bc45c34963df
-filter!(x -> x >= 10_000, table[:, :Area])
-
-# ╔═╡ d3a06644-d8ff-4ac9-bce3-336dd1a09d63
-filter!(x -> x[!, "Price"] >= 1_000_000, table)
-
-# ╔═╡ b4422b58-c017-4f75-bbe4-8c894d1354ef
-table
-
-# ╔═╡ 615989a7-b65d-462a-98d6-f1e74b663454
-plot(table[!, :Area], table[!, :Price],
-	title="Housing price in Hanoi (2020)",
-	xlabel="Area(square)",
-	ylabel="Price(million dong)",
-	seriestype=:scatter,
+# ╔═╡ 0a35c919-e9e7-43f1-996d-58c6659e02c8
+scatter(formatted_df[!, :area], formatted_df[!, :price],
+	title = "Housing price in Hoang Mai district (2020)",
+	xlabel = "Area(square)",
+	ylabel = "Price(in billion dong)",
 	legend=false
 )
 
-# ╔═╡ 0e7dc7be-e6d7-497b-af14-1d0481192512
-table[1, :]
+# ╔═╡ 027fb282-5928-42a7-8e89-e8825f9e39e0
+@bind column Select([:area, :price])
+
+# ╔═╡ 4a0c56fa-cd57-47b5-aa47-39bde0e251e7
+describe(formatted_df[:, column])
+
+# ╔═╡ ec4e18b3-7d3e-44bf-9935-5501a3798010
+boxplot(formatted_df[:, column],
+	title = "Boxplot for $column data",
+	legend = :false,
+)
+
+# ╔═╡ 1b2d03b9-e91e-49ed-94a0-9c38604b3fc2
+@bind new_column Select([:area, :price])
+
+# ╔═╡ 6efc8bfd-db82-43e1-a447-4446b0e70d3e
+begin
+	up_outlier_area = percentile(formatted_df.area, 75) + 1.5 * iqr(formatted_df.area)
+	low_outlier_area = percentile(formatted_df.area, 25) - 1.5 * iqr(formatted_df.area)
+	up_outlier_price = percentile(formatted_df.price, 75) + 1.5 * iqr(formatted_df.price)
+	low_outlier_price = percentile(formatted_df.price, 25) - 1.5 * iqr(formatted_df.price)
+	df = @rsubset formatted_df begin 
+		low_outlier_price < :price < up_outlier_price
+		low_outlier_area < :area < up_outlier_area
+	end
+end
+
+# ╔═╡ 6934bcde-c0c7-4a45-9297-f150714a29ca
+describe(df[:, column])
+
+# ╔═╡ 2cd91ba4-fdbc-4cee-8d61-9eb720b45069
+boxplot(df[:, column],
+	title = "Boxplot for $column data",
+	legend = :false,
+)
+
+# ╔═╡ 9fdf0c3d-c3be-43f6-a501-6aced05971cf
+scatter(df[!, :area], df[!, :price],
+	title = "Housing price in Hoang Mai district (2020)",
+	xlabel = "Area(square)",
+	ylabel = "Price(in billion dong)",
+	legend=false,
+	color = :cyan
+)
 
 # ╔═╡ 067be4c0-4572-4731-8dc8-d828ad5bb9e9
 md"""
@@ -111,36 +146,67 @@ md"""
 """
 
 # ╔═╡ 9be3b4c4-8906-48fe-9ecb-d1088298bed3
-X = area
+X = df.area;
 
 # ╔═╡ 87fba0c9-6b37-42e7-b921-a0806fb717dd
-Y =  price / 1000
+Y =  df.price;
 
 # ╔═╡ 5516b510-b90c-47e3-83e9-ee6a049ed8b0
-
+table = Table(X = X, Y = Y);
 
 # ╔═╡ b29bc539-d77b-402a-9972-68f8a4878749
-
+ordinary_least_square = lm(@formula(Y ~ X), table)
 
 # ╔═╡ 6df98270-bf91-4483-b247-81aafdaa44f1
+plot!(X, predict(ordinary_least_square),
+	color = :red,
+	linewidth = 3,
+)
 
+# ╔═╡ 93275900-7c6e-48dc-b6c1-457b9c1b13ce
+@bind desire NumberField(0:10_000, default=40)
+
+# ╔═╡ 006e6c60-886a-4bfc-943d-e87bf55e2682
+try
+	"The house price corresponding to the $(desire)/m2 approximate: $(round((predict(ordinary_least_square, Table(X = [desire])))[1]; digits = 2)) billion dong"
+catch e
+	"Please type some number"
+end
+
+# ╔═╡ 71976ffc-300e-4d21-b91e-2e0eebac6cfc
+md"""
+## Conclusion
+"""
+
+# ╔═╡ 82923e10-b8ba-49e1-81ef-7856d393685c
+# In progress
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+DataFramesMeta = "1313f7d8-7da2-5740-9ea0-a2ca25f37964"
 GLM = "38e38edf-8417-5370-95a0-9cbb8c7f171a"
+HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
+TypedTables = "9d95f2ec-7b3d-5a63-8d20-e2491e220bb9"
 
 [compat]
 CSV = "~0.10.9"
 DataFrames = "~1.5.0"
+DataFramesMeta = "~0.13.0"
 GLM = "~1.8.1"
+HTTP = "~1.7.4"
 Plots = "~1.38.7"
+PlutoUI = "~0.7.50"
+StatsBase = "~0.33.21"
 StatsPlots = "~0.15.4"
+TypedTables = "~1.4.1"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -149,13 +215,19 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.5"
 manifest_format = "2.0"
-project_hash = "5ac836b2c14cf726eff569d2658f3b6a270f347b"
+project_hash = "c2c893fcd5458f974d6e85cae38b62ba9b6c7ec5"
 
 [[deps.AbstractFFTs]]
 deps = ["ChainRulesCore", "LinearAlgebra"]
 git-tree-sha1 = "16b6dbc4cf7caee4e1e75c49485ec67b667098a0"
 uuid = "621f4979-c628-5d54-868e-fcf4e3e8185c"
 version = "1.3.1"
+
+[[deps.AbstractPlutoDingetjes]]
+deps = ["Pkg"]
+git-tree-sha1 = "8eaf9f1b4921132a4cff3f36a1d9ba923b14a481"
+uuid = "6e696c72-6542-2067-7265-42206c756150"
+version = "1.1.4"
 
 [[deps.Adapt]]
 deps = ["LinearAlgebra", "Requires"]
@@ -219,6 +291,11 @@ deps = ["LinearAlgebra"]
 git-tree-sha1 = "f641eb0a4f00c343bbc32346e1217b86f3ce9dad"
 uuid = "49dc2e85-a5d0-5ad3-a950-438e2897f1b9"
 version = "0.5.1"
+
+[[deps.Chain]]
+git-tree-sha1 = "8c4920235f6c561e401dfe569beb8b924adad003"
+uuid = "8be319e6-bccf-4806-a6f7-6fae938471bc"
+version = "0.5.0"
 
 [[deps.ChainRulesCore]]
 deps = ["Compat", "LinearAlgebra", "SparseArrays"]
@@ -300,6 +377,12 @@ git-tree-sha1 = "aa51303df86f8626a962fccb878430cdb0a97eee"
 uuid = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 version = "1.5.0"
 
+[[deps.DataFramesMeta]]
+deps = ["Chain", "DataFrames", "MacroTools", "OrderedCollections", "Reexport"]
+git-tree-sha1 = "f9db5b04be51162fbeacf711005cb36d8434c55b"
+uuid = "1313f7d8-7da2-5740-9ea0-a2ca25f37964"
+version = "0.13.0"
+
 [[deps.DataStructures]]
 deps = ["Compat", "InteractiveUtils", "OrderedCollections"]
 git-tree-sha1 = "d1fff3a548102f48987a52a2e0d114fa97d730f0"
@@ -330,6 +413,12 @@ deps = ["InverseFunctions", "Test"]
 git-tree-sha1 = "80c3e8639e3353e5d2912fb3a1916b8455e2494b"
 uuid = "b429d917-457f-4dbc-8f4c-0cc954292b1d"
 version = "0.4.0"
+
+[[deps.Dictionaries]]
+deps = ["Indexing", "Random", "Serialization"]
+git-tree-sha1 = "e82c3c97b5b4ec111f3c1b55228cebc7510525a2"
+uuid = "85a47980-9c8c-11e8-2b9f-f7ca1fa99fb4"
+version = "0.3.25"
 
 [[deps.Distances]]
 deps = ["LinearAlgebra", "SparseArrays", "Statistics", "StatsAPI"]
@@ -507,6 +596,29 @@ deps = ["DualNumbers", "LinearAlgebra", "OpenLibm_jll", "SpecialFunctions", "Tes
 git-tree-sha1 = "709d864e3ed6e3545230601f94e11ebc65994641"
 uuid = "34004b35-14d8-5ef3-9330-4cdb6864b03a"
 version = "0.3.11"
+
+[[deps.Hyperscript]]
+deps = ["Test"]
+git-tree-sha1 = "8d511d5b81240fc8e6802386302675bdf47737b9"
+uuid = "47d2ed2b-36de-50cf-bf87-49c2cf4b8b91"
+version = "0.0.4"
+
+[[deps.HypertextLiteral]]
+deps = ["Tricks"]
+git-tree-sha1 = "c47c5fa4c5308f27ccaac35504858d8914e102f9"
+uuid = "ac1192a8-f4b3-4bfe-ba22-af5b92cd3ab2"
+version = "0.9.4"
+
+[[deps.IOCapture]]
+deps = ["Logging", "Random"]
+git-tree-sha1 = "f7be53659ab06ddc986428d3a9dcc95f6fa6705a"
+uuid = "b5f81e59-6552-4d32-b1f0-c071b021bf89"
+version = "0.2.2"
+
+[[deps.Indexing]]
+git-tree-sha1 = "ce1566720fd6b19ff3411404d4b977acd4814f9f"
+uuid = "313cdc1a-70c2-5d6a-ae34-0150d3930a38"
+version = "1.1.1"
 
 [[deps.IniFile]]
 git-tree-sha1 = "f550e6e32074c939295eb5ea6de31849ac2c9625"
@@ -708,6 +820,11 @@ git-tree-sha1 = "cedb76b37bc5a6c702ade66be44f831fa23c681e"
 uuid = "e6f89c97-d47a-5376-807f-9c37f3926c36"
 version = "1.0.0"
 
+[[deps.MIMEs]]
+git-tree-sha1 = "65f28ad4b594aebe22157d6fac869786a255b7eb"
+uuid = "6c6e2e6c-3030-632d-7369-2d6c69616d65"
+version = "0.1.4"
+
 [[deps.MKL_jll]]
 deps = ["Artifacts", "IntelOpenMP_jll", "JLLWrappers", "LazyArtifacts", "Libdl", "Pkg"]
 git-tree-sha1 = "2ce8695e1e699b68702c03402672a69f54b8aca9"
@@ -882,6 +999,12 @@ git-tree-sha1 = "cfcd24ebf8b066b4f8e42bade600c8558212ed83"
 uuid = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 version = "1.38.7"
 
+[[deps.PlutoUI]]
+deps = ["AbstractPlutoDingetjes", "Base64", "ColorTypes", "Dates", "FixedPointNumbers", "Hyperscript", "HypertextLiteral", "IOCapture", "InteractiveUtils", "JSON", "Logging", "MIMEs", "Markdown", "Random", "Reexport", "URIs", "UUIDs"]
+git-tree-sha1 = "5bb5129fdd62a2bbbe17c2756932259acf467386"
+uuid = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+version = "0.7.50"
+
 [[deps.PooledArrays]]
 deps = ["DataAPI", "Future"]
 git-tree-sha1 = "a6062fe4063cdafe78f4a0a81cfffb89721b30e7"
@@ -1035,6 +1158,12 @@ git-tree-sha1 = "ef28127915f4229c971eb43f3fc075dd3fe91880"
 uuid = "276daf66-3868-5448-9aa4-cd146d93841b"
 version = "2.2.0"
 
+[[deps.SplitApplyCombine]]
+deps = ["Dictionaries", "Indexing"]
+git-tree-sha1 = "48f393b0231516850e39f6c756970e7ca8b77045"
+uuid = "03a91e81-4c3e-53e1-a0a4-9c0c8f19dd66"
+version = "1.2.2"
+
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "Random", "StaticArraysCore", "Statistics"]
 git-tree-sha1 = "2d7d9e1ddadc8407ffd460e24218e37ef52dd9a3"
@@ -1132,6 +1261,17 @@ deps = ["Random", "Test"]
 git-tree-sha1 = "94f38103c984f89cf77c402f2a68dbd870f8165f"
 uuid = "3bb67fe8-82b1-5028-8e26-92a6c54297fa"
 version = "0.9.11"
+
+[[deps.Tricks]]
+git-tree-sha1 = "6bac775f2d42a611cdfcd1fb217ee719630c4175"
+uuid = "410a4b4d-49e4-4fbc-ab6d-cb71b17b3775"
+version = "0.1.6"
+
+[[deps.TypedTables]]
+deps = ["Adapt", "Dictionaries", "Indexing", "SplitApplyCombine", "Tables", "Unicode"]
+git-tree-sha1 = "ec72e7a68a6ffdc507b751714ff3e84e09135d9e"
+uuid = "9d95f2ec-7b3d-5a63-8d20-e2491e220bb9"
+version = "1.4.1"
 
 [[deps.URIs]]
 git-tree-sha1 = "074f993b0ca030848b897beff716d93aca60f06a"
@@ -1411,38 +1551,39 @@ version = "1.4.1+0"
 """
 
 # ╔═╡ Cell order:
+# ╟─c01f2140-03aa-4f4f-9527-308263ebabb1
 # ╠═85b2d40f-9b6c-441c-bf6f-837b1ffcd40d
 # ╠═449e934d-91c6-4569-bf81-5168a61d46ff
 # ╟─bd7f95cf-994e-4e03-93a8-0add0826f4c5
+# ╟─ada5ae54-acda-4c98-9c46-3194a7528961
 # ╠═7b07a558-f478-4124-85cc-7896415229bd
 # ╠═3fefbdc5-d0fa-4b19-82f3-e41a36560fa8
-# ╠═0614e56e-ff63-439d-aed6-151a5d1c161e
 # ╟─952673f4-6171-4a2d-87c9-4bd8311f4afb
-# ╠═c282d1d1-fd38-48c6-adf9-57b0860836d4
+# ╠═0614e56e-ff63-439d-aed6-151a5d1c161e
 # ╠═e2a5efd1-6927-4ac1-9eaa-72c9eb13af98
-# ╠═d412386e-b1af-4259-859b-babc8ef87e70
-# ╠═87fd91a6-fff6-46bb-87bc-256862d9be57
-# ╠═b0447b5d-ec17-4dd8-a1b8-1b150006f44b
-# ╠═416a643b-e2ca-4d2f-af07-5dcc9bcb188c
-# ╠═cd19344e-3a89-4f67-8164-a692af1fac45
-# ╠═48314e4f-b98e-49cd-a86e-240e212dea3e
-# ╠═c17ece68-9e8d-45a8-96a7-f4391fda5897
-# ╠═fe335996-4c13-456d-8120-12df85edde09
-# ╠═cd5bfdd5-af6a-45e0-a279-10f504af72ab
-# ╠═9592810e-41e6-4f7f-b67e-781cdab61b6b
-# ╠═f43c15c8-1d6b-4f4d-b36a-56f2f189ffad
-# ╠═d9763dcb-7f2f-4727-b8f0-7ec8a10f5d30
-# ╠═c38753ba-5f2d-4b31-be77-bc45c34963df
-# ╠═d3a06644-d8ff-4ac9-bce3-336dd1a09d63
-# ╠═b4422b58-c017-4f75-bbe4-8c894d1354ef
-# ╠═615989a7-b65d-462a-98d6-f1e74b663454
-# ╠═0e7dc7be-e6d7-497b-af14-1d0481192512
+# ╠═b3f1a018-e129-4507-9363-ccdf8f1b80ce
+# ╟─aa7303c6-3a7e-45c1-ad64-ed7c65e867e0
+# ╟─119cda78-06d7-40b2-b9d7-fd6d06a81fda
+# ╟─cd19344e-3a89-4f67-8164-a692af1fac45
+# ╟─0a35c919-e9e7-43f1-996d-58c6659e02c8
+# ╟─027fb282-5928-42a7-8e89-e8825f9e39e0
+# ╟─4a0c56fa-cd57-47b5-aa47-39bde0e251e7
+# ╟─ec4e18b3-7d3e-44bf-9935-5501a3798010
+# ╟─1b2d03b9-e91e-49ed-94a0-9c38604b3fc2
+# ╟─6934bcde-c0c7-4a45-9297-f150714a29ca
+# ╟─2cd91ba4-fdbc-4cee-8d61-9eb720b45069
+# ╠═6efc8bfd-db82-43e1-a447-4446b0e70d3e
+# ╠═9fdf0c3d-c3be-43f6-a501-6aced05971cf
 # ╟─067be4c0-4572-4731-8dc8-d828ad5bb9e9
 # ╠═a19b6a65-5675-40cd-9b8c-d7ed5b10eae8
 # ╠═9be3b4c4-8906-48fe-9ecb-d1088298bed3
 # ╠═87fba0c9-6b37-42e7-b921-a0806fb717dd
 # ╠═5516b510-b90c-47e3-83e9-ee6a049ed8b0
-# ╠═b29bc539-d77b-402a-9972-68f8a4878749
+# ╟─b29bc539-d77b-402a-9972-68f8a4878749
 # ╠═6df98270-bf91-4483-b247-81aafdaa44f1
+# ╠═93275900-7c6e-48dc-b6c1-457b9c1b13ce
+# ╟─006e6c60-886a-4bfc-943d-e87bf55e2682
+# ╟─71976ffc-300e-4d21-b91e-2e0eebac6cfc
+# ╠═82923e10-b8ba-49e1-81ef-7856d393685c
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
