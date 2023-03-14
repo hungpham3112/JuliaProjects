@@ -107,9 +107,6 @@ boxplot(formatted_df[:, column],
 	legend = :false,
 )
 
-# ╔═╡ 1b2d03b9-e91e-49ed-94a0-9c38604b3fc2
-@bind new_column Select([:area, :price])
-
 # ╔═╡ 6efc8bfd-db82-43e1-a447-4446b0e70d3e
 begin
 	up_outlier_area = percentile(formatted_df.area, 75) + 1.5 * iqr(formatted_df.area)
@@ -122,11 +119,14 @@ begin
 	end
 end
 
+# ╔═╡ 1b2d03b9-e91e-49ed-94a0-9c38604b3fc2
+@bind new_column Select([:area, :price])
+
 # ╔═╡ 6934bcde-c0c7-4a45-9297-f150714a29ca
 describe(df[:, column])
 
 # ╔═╡ 2cd91ba4-fdbc-4cee-8d61-9eb720b45069
-boxplot(df[:, column],
+boxplot(df[:, new_column],
 	title = "Boxplot for $column data",
 	legend = :false,
 )
@@ -142,7 +142,7 @@ scatter(df[!, :area], df[!, :price],
 
 # ╔═╡ 067be4c0-4572-4731-8dc8-d828ad5bb9e9
 md"""
-# Non Machine Learning way
+## Linear Regression Approach
 """
 
 # ╔═╡ 9be3b4c4-8906-48fe-9ecb-d1088298bed3
@@ -150,6 +150,105 @@ X = df.area;
 
 # ╔═╡ 87fba0c9-6b37-42e7-b921-a0806fb717dd
 Y =  df.price;
+
+# ╔═╡ 5f8c3ea0-9652-4af8-b29b-bec4a601b9ad
+n = length(X)
+
+# ╔═╡ 79d709ac-50db-4864-b4ee-b93b9d0746ad
+md"""
+#### Pure Math
+"""
+
+# ╔═╡ 0c12745d-bfb5-4934-8556-a71904292cdb
+md"""
+$$\bar x = \dfrac{\sum_{i = 1}^nx_i}{n}$$
+"""
+
+# ╔═╡ dceac795-e899-4be2-9650-551216d81dbb
+X̄ = mean(df.area)
+
+# ╔═╡ de086a22-ff31-4e4c-ab05-e460896204e8
+md"""
+$$\bar y = \dfrac{\sum_{i = 1}^ny_i}{n}$$
+"""
+
+# ╔═╡ e11aad9f-f031-4b6a-b630-06af3c8c1b00
+Ȳ = mean(df.price)
+
+# ╔═╡ 7ba42621-7fe1-473c-bc13-b7481685242f
+md"""
+$$\sum_{i = 1}^nx_i^2$$
+"""
+
+# ╔═╡ 588b390a-f62f-47ce-8521-fafb6a41a125
+sum_x² = sum(X.^2)
+
+# ╔═╡ 140790ac-dd7d-4601-a0ac-6e9405644dbc
+md"""
+$$\sum_{i = 1}^ny_i^2$$
+"""
+
+# ╔═╡ 464d81f6-b655-44d3-8148-08cab6dcad0e
+sum_y² = sum(Y.^2)
+
+# ╔═╡ a279ddb8-3769-45dd-848d-8ea1d45fd299
+md"""
+$$\sum_{i = 1}^nx_iy_i$$
+"""
+
+# ╔═╡ 4d904862-3a45-4ee0-a8a9-fd0ef65f12c0
+sum_xy = sum(X .* Y)
+
+# ╔═╡ 978299df-5721-44a0-a976-434e648ead58
+md"""
+$$S_{xx} = \sum_{i = 1}^nx_i^2 - \dfrac{(\sum_{i = 1}^nx_i)^2}{n}$$
+"""
+
+# ╔═╡ a161d34f-af1f-4960-818f-aecc919885cb
+S_xx = sum_x² - X̄^2 * n
+
+# ╔═╡ 510aa47c-d1e6-40d3-8d23-3c1def9499a9
+md"""
+$$S_{xy} = \sum_{i = 1}^nx_iy_i - \dfrac{(\sum_{i = 1}^nx_i)(\sum_{i = 1}^ny_i)}{n}$$
+"""
+
+# ╔═╡ 600c2471-d9db-4e07-896b-c689b979f9f6
+S_xy = sum_xy - X̄ * Ȳ * n
+
+# ╔═╡ b329998d-ca5e-4fd0-aeae-d5b82529df2c
+md"""
+$$\hat \beta_0 = \bar y - \hat \beta_1\bar x$$
+"""
+
+# ╔═╡ ca5fa588-2b95-4792-84f7-b7ec4bdade13
+md"""
+$$\hat \beta_1 = \dfrac{\sum_{i = 1}^ny_ix_i - \dfrac{(\sum_{i = 1}^ny_i)(\sum_{i = 1}^nx_i)}{n}}{\sum_{i = 1}^nx_i^2 - \dfrac{(\sum_{i = 1}^nx_i)^2}{n}}$$
+"""
+
+# ╔═╡ 6bd4e4d9-8d70-478a-aabe-3d6627087dbe
+β̂₁ = S_xy / S_xx
+
+# ╔═╡ c725fc9b-5486-466b-bc87-b2812e319103
+β̂₀ = Ȳ - β̂₁ * X̄
+
+# ╔═╡ e4d393fa-ea78-4a79-b180-7bff540c2e5e
+md"""
+$$\hat y = \hat \beta_0 + \hat \beta_1x$$
+"""
+
+# ╔═╡ 62d1e434-1fce-4b3b-81cb-3652f8de0425
+ŷ = β̂₀ .+ β̂₁ .* X
+
+# ╔═╡ e0c82598-9c71-426e-963f-fe87cf1ff641
+plot!(X, ŷ,
+	color = :red,
+	linewidth = 3,
+)
+
+# ╔═╡ 6e7679e0-d6f6-4ff1-92b5-0cd749463c4a
+md"""
+#### Using GLM library
+"""
 
 # ╔═╡ 5516b510-b90c-47e3-83e9-ee6a049ed8b0
 table = Table(X = X, Y = Y);
@@ -159,7 +258,7 @@ ordinary_least_square = lm(@formula(Y ~ X), table)
 
 # ╔═╡ 6df98270-bf91-4483-b247-81aafdaa44f1
 plot!(X, predict(ordinary_least_square),
-	color = :red,
+	color = :yellow,
 	linewidth = 3,
 )
 
@@ -173,6 +272,100 @@ catch e
 	"Please type some number"
 end
 
+# ╔═╡ a83e15cb-6eb9-462a-9cb7-97e5fb03753f
+md"""
+## Machine Learning Approach
+"""
+
+# ╔═╡ 5a9a5e29-5bf1-49d6-835f-5d2104dad6e7
+epochs = 0
+
+# ╔═╡ 6daa07e0-6685-4c4c-b43f-c571b4e2c817
+scatter(df[!, :area], df[!, :price],
+	title = "Housing price in Hoang Mai district (2020)\n(epochs = $epochs)",
+	xlabel = "Area(square)",
+	ylabel = "Price(in billion dong)",
+	legend=false,
+	color = :cyan
+)
+
+# ╔═╡ ef46f78a-bea5-430b-a60f-84f767a6d7de
+θ₀ = 0.0 # y-intercept
+
+# ╔═╡ 373f6431-3c6c-4572-8e12-86cab7b42452
+θ₁ = 0.0 #slope
+
+# ╔═╡ 78aa012c-4054-4cfe-a322-775fd5167a8d
+@show h(x) = θ₀ .+ θ₁ * x # x is vector
+
+# ╔═╡ 738bd86a-66cb-47fc-a379-14ce38569bca
+plot!(X, h(X),
+	color = :blue,
+	linewidth = 3
+)
+
+# ╔═╡ 629ef46b-e10b-4a9f-946e-b9a6500dfa37
+md"""
+### Cost function
+"""
+
+# ╔═╡ a414457b-902b-4b4b-8b1f-0f652ed77729
+m = length(X)
+
+# ╔═╡ 4df84604-4f01-4631-a285-0d65b410ca5a
+# ╠═╡ disabled = true
+#=╠═╡
+ŷ = h(X)
+  ╠═╡ =#
+
+# ╔═╡ 91b6575e-c1a4-421a-b08e-8644cf63e184
+@show J(θ₀, θ₁) = (1 / 2m) * sum((ŷ - Y) .^2 )
+
+# ╔═╡ 1daf359a-36fe-4456-b6cc-16dfc9453865
+J_history = []
+
+# ╔═╡ 1bf04890-b86e-4285-8b2e-1e78f4498121
+push!(J_history, J)
+
+# ╔═╡ 54f8fb66-2ac2-457b-9c08-5a96b60c34fe
+md"""
+### Batch gradient descent
+"""
+
+# ╔═╡ adef3ec8-e822-4a31-abb1-c868f87ecc7f
+function partial_derivative_θ₀(X, Y)
+	(1 / m) * sum(ŷ - Y)
+end
+
+# ╔═╡ e16b8b9e-ddfb-4854-9c60-690ddc90abeb
+function partial_derivative_θ₁(X, Y)
+	(1 / m) * sum((ŷ - Y) .* X)
+end
+
+# ╔═╡ 02e46090-4871-4bdf-9325-4a4d1e2641ed
+α = 0.01
+
+# ╔═╡ a176b5eb-4e1e-409b-96eb-5ef28368066c
+for i in 1:10
+	θ₀_temp = partial_derivative_θ₀(X, Y)
+	θ₁_temp = partial_derivative_θ₁(X, Y)
+	θ₀_new -= θ₀ -  α * θ₀_temp
+	θ₁_new -= θ₁ -  α * θ₁_temp
+	new_ŷ = h(X)
+end
+
+# ╔═╡ 3b7efedf-b578-4055-9ce1-044bfca03fff
+new_ŷ = h(X)
+
+# ╔═╡ 2da31e20-aa3b-40b0-85e9-5d59df62197e
+new_J = theta_0
+
+# ╔═╡ ad8b3b9d-4712-4608-9860-f98f2b04a9c0
+plot!(X, ŷ,
+	color = :blue,
+	linewidth = 3
+)
+
 # ╔═╡ 71976ffc-300e-4d21-b91e-2e0eebac6cfc
 md"""
 ## Conclusion
@@ -180,6 +373,9 @@ md"""
 
 # ╔═╡ 82923e10-b8ba-49e1-81ef-7856d393685c
 # In progress
+
+# ╔═╡ 3303e824-1b49-4865-83e2-274b59f9f5f1
+TableOfContents(title="Table of Contents", indent=true, depth=4, aside=true)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1035,9 +1231,9 @@ version = "5.15.3+2"
 
 [[deps.QuadGK]]
 deps = ["DataStructures", "LinearAlgebra"]
-git-tree-sha1 = "786efa36b7eff813723c4849c90456609cf06661"
+git-tree-sha1 = "6ec7ac8412e83d57e313393220879ede1740f9ee"
 uuid = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
-version = "2.8.1"
+version = "2.8.2"
 
 [[deps.REPL]]
 deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]
@@ -1166,9 +1362,9 @@ version = "1.2.2"
 
 [[deps.StaticArrays]]
 deps = ["LinearAlgebra", "Random", "StaticArraysCore", "Statistics"]
-git-tree-sha1 = "2d7d9e1ddadc8407ffd460e24218e37ef52dd9a3"
+git-tree-sha1 = "6aa098ef1012364f2ede6b17bf358c7f1fbe90d4"
 uuid = "90137ffa-7385-5640-81b9-e52037218182"
-version = "1.5.16"
+version = "1.5.17"
 
 [[deps.StaticArraysCore]]
 git-tree-sha1 = "6b7ba252635a5eff6a0b0664a41ee140a1c9e72a"
@@ -1237,9 +1433,9 @@ version = "1.0.1"
 
 [[deps.Tables]]
 deps = ["DataAPI", "DataValueInterfaces", "IteratorInterfaceExtensions", "LinearAlgebra", "OrderedCollections", "TableTraits", "Test"]
-git-tree-sha1 = "c79322d36826aa2f4fd8ecfa96ddb47b174ac78d"
+git-tree-sha1 = "1544b926975372da01227b382066ab70e574a3ec"
 uuid = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
-version = "1.10.0"
+version = "1.10.1"
 
 [[deps.Tar]]
 deps = ["ArgTools", "SHA"]
@@ -1555,35 +1751,81 @@ version = "1.4.1+0"
 # ╠═85b2d40f-9b6c-441c-bf6f-837b1ffcd40d
 # ╠═449e934d-91c6-4569-bf81-5168a61d46ff
 # ╟─bd7f95cf-994e-4e03-93a8-0add0826f4c5
-# ╟─ada5ae54-acda-4c98-9c46-3194a7528961
+# ╠═ada5ae54-acda-4c98-9c46-3194a7528961
 # ╠═7b07a558-f478-4124-85cc-7896415229bd
 # ╠═3fefbdc5-d0fa-4b19-82f3-e41a36560fa8
 # ╟─952673f4-6171-4a2d-87c9-4bd8311f4afb
 # ╠═0614e56e-ff63-439d-aed6-151a5d1c161e
 # ╠═e2a5efd1-6927-4ac1-9eaa-72c9eb13af98
 # ╠═b3f1a018-e129-4507-9363-ccdf8f1b80ce
-# ╟─aa7303c6-3a7e-45c1-ad64-ed7c65e867e0
-# ╟─119cda78-06d7-40b2-b9d7-fd6d06a81fda
-# ╟─cd19344e-3a89-4f67-8164-a692af1fac45
-# ╟─0a35c919-e9e7-43f1-996d-58c6659e02c8
+# ╠═aa7303c6-3a7e-45c1-ad64-ed7c65e867e0
+# ╠═119cda78-06d7-40b2-b9d7-fd6d06a81fda
+# ╠═cd19344e-3a89-4f67-8164-a692af1fac45
+# ╠═0a35c919-e9e7-43f1-996d-58c6659e02c8
 # ╟─027fb282-5928-42a7-8e89-e8825f9e39e0
 # ╟─4a0c56fa-cd57-47b5-aa47-39bde0e251e7
-# ╟─ec4e18b3-7d3e-44bf-9935-5501a3798010
-# ╟─1b2d03b9-e91e-49ed-94a0-9c38604b3fc2
+# ╠═ec4e18b3-7d3e-44bf-9935-5501a3798010
+# ╠═6efc8bfd-db82-43e1-a447-4446b0e70d3e
+# ╠═1b2d03b9-e91e-49ed-94a0-9c38604b3fc2
 # ╟─6934bcde-c0c7-4a45-9297-f150714a29ca
 # ╟─2cd91ba4-fdbc-4cee-8d61-9eb720b45069
-# ╠═6efc8bfd-db82-43e1-a447-4446b0e70d3e
 # ╠═9fdf0c3d-c3be-43f6-a501-6aced05971cf
 # ╟─067be4c0-4572-4731-8dc8-d828ad5bb9e9
 # ╠═a19b6a65-5675-40cd-9b8c-d7ed5b10eae8
 # ╠═9be3b4c4-8906-48fe-9ecb-d1088298bed3
 # ╠═87fba0c9-6b37-42e7-b921-a0806fb717dd
+# ╠═5f8c3ea0-9652-4af8-b29b-bec4a601b9ad
+# ╟─79d709ac-50db-4864-b4ee-b93b9d0746ad
+# ╟─0c12745d-bfb5-4934-8556-a71904292cdb
+# ╟─dceac795-e899-4be2-9650-551216d81dbb
+# ╟─de086a22-ff31-4e4c-ab05-e460896204e8
+# ╟─e11aad9f-f031-4b6a-b630-06af3c8c1b00
+# ╟─7ba42621-7fe1-473c-bc13-b7481685242f
+# ╟─588b390a-f62f-47ce-8521-fafb6a41a125
+# ╟─140790ac-dd7d-4601-a0ac-6e9405644dbc
+# ╟─464d81f6-b655-44d3-8148-08cab6dcad0e
+# ╟─a279ddb8-3769-45dd-848d-8ea1d45fd299
+# ╟─4d904862-3a45-4ee0-a8a9-fd0ef65f12c0
+# ╟─978299df-5721-44a0-a976-434e648ead58
+# ╠═a161d34f-af1f-4960-818f-aecc919885cb
+# ╟─510aa47c-d1e6-40d3-8d23-3c1def9499a9
+# ╠═600c2471-d9db-4e07-896b-c689b979f9f6
+# ╟─b329998d-ca5e-4fd0-aeae-d5b82529df2c
+# ╠═c725fc9b-5486-466b-bc87-b2812e319103
+# ╟─ca5fa588-2b95-4792-84f7-b7ec4bdade13
+# ╠═6bd4e4d9-8d70-478a-aabe-3d6627087dbe
+# ╟─e4d393fa-ea78-4a79-b180-7bff540c2e5e
+# ╠═62d1e434-1fce-4b3b-81cb-3652f8de0425
+# ╠═e0c82598-9c71-426e-963f-fe87cf1ff641
+# ╟─6e7679e0-d6f6-4ff1-92b5-0cd749463c4a
 # ╠═5516b510-b90c-47e3-83e9-ee6a049ed8b0
 # ╟─b29bc539-d77b-402a-9972-68f8a4878749
 # ╠═6df98270-bf91-4483-b247-81aafdaa44f1
 # ╠═93275900-7c6e-48dc-b6c1-457b9c1b13ce
 # ╟─006e6c60-886a-4bfc-943d-e87bf55e2682
+# ╟─a83e15cb-6eb9-462a-9cb7-97e5fb03753f
+# ╠═5a9a5e29-5bf1-49d6-835f-5d2104dad6e7
+# ╟─6daa07e0-6685-4c4c-b43f-c571b4e2c817
+# ╠═ef46f78a-bea5-430b-a60f-84f767a6d7de
+# ╠═373f6431-3c6c-4572-8e12-86cab7b42452
+# ╠═78aa012c-4054-4cfe-a322-775fd5167a8d
+# ╠═738bd86a-66cb-47fc-a379-14ce38569bca
+# ╟─629ef46b-e10b-4a9f-946e-b9a6500dfa37
+# ╠═a414457b-902b-4b4b-8b1f-0f652ed77729
+# ╠═4df84604-4f01-4631-a285-0d65b410ca5a
+# ╟─91b6575e-c1a4-421a-b08e-8644cf63e184
+# ╠═1daf359a-36fe-4456-b6cc-16dfc9453865
+# ╠═1bf04890-b86e-4285-8b2e-1e78f4498121
+# ╟─54f8fb66-2ac2-457b-9c08-5a96b60c34fe
+# ╠═adef3ec8-e822-4a31-abb1-c868f87ecc7f
+# ╠═e16b8b9e-ddfb-4854-9c60-690ddc90abeb
+# ╠═02e46090-4871-4bdf-9325-4a4d1e2641ed
+# ╠═a176b5eb-4e1e-409b-96eb-5ef28368066c
+# ╠═3b7efedf-b578-4055-9ce1-044bfca03fff
+# ╠═2da31e20-aa3b-40b0-85e9-5d59df62197e
+# ╠═ad8b3b9d-4712-4608-9860-f98f2b04a9c0
 # ╟─71976ffc-300e-4d21-b91e-2e0eebac6cfc
 # ╠═82923e10-b8ba-49e1-81ef-7856d393685c
+# ╠═3303e824-1b49-4865-83e2-274b59f9f5f1
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
