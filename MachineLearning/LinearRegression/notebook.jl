@@ -58,8 +58,8 @@ sub_df = @chain raw_df begin
 	# remove missing value
     dropmissing 
 	# Extract Hoang mai district and remove "NaN" in price_per_square
-    @rsubset occursin("Hoàng Mai", :district) && !occursin("NaN", :price_per_square)
-	# Select only 2 columns from df
+    @rsubset occursin("Hoàng Mai", :district) && !occursin("NaN", :price_per_square) && !occursin("đ/m2", :price_per_square) && !occursin("tỷ/m2", :price_per_square)
+	# Select only 2 columns from df 
     @select :area :price_per_square
 end
 
@@ -76,7 +76,6 @@ float_df = @rtransform string_number_df begin
 end
 
 # ╔═╡ cd19344e-3a89-4f67-8164-a692af1fac45
-# Create new table from transformed_df
 formatted_df = @chain float_df begin
     
     # Add "price" column
@@ -89,7 +88,7 @@ end
 
 # ╔═╡ 0a35c919-e9e7-43f1-996d-58c6659e02c8
 scatter(formatted_df[!, :area], formatted_df[!, :price],
-	title = "Housing price in Hoang Mai district (2020)",
+	title = "Housing price in Hoang Mai district (2019 - 2020)",
 	xlabel = "Area(square)",
 	ylabel = "Price(in billion dong)",
 	legend=false
@@ -133,7 +132,7 @@ boxplot(df[:, new_column],
 
 # ╔═╡ 9fdf0c3d-c3be-43f6-a501-6aced05971cf
 scatter(df[!, :area], df[!, :price],
-	title = "Housing price in Hoang Mai district (2020)",
+	title = "Housing price in Hoang Mai district (2019 - 2020)",
 	xlabel = "Area(square)",
 	ylabel = "Price(in billion dong)",
 	legend=false,
@@ -146,7 +145,7 @@ md"""
 """
 
 # ╔═╡ 9be3b4c4-8906-48fe-9ecb-d1088298bed3
-X = df.area;
+X = df.area
 
 # ╔═╡ 87fba0c9-6b37-42e7-b921-a0806fb717dd
 Y =  df.price;
@@ -272,99 +271,119 @@ catch e
 	"Please type some number"
 end
 
-# ╔═╡ a83e15cb-6eb9-462a-9cb7-97e5fb03753f
+# ╔═╡ 2c268a1d-f091-415b-8659-9efd4e1627b1
 md"""
-## Machine Learning Approach
+## Multiple Linear Regression
 """
 
-# ╔═╡ 5a9a5e29-5bf1-49d6-835f-5d2104dad6e7
-epochs = 0
+# ╔═╡ 5e2523fb-f24c-49af-8d16-11a2d5f39c45
+raw_df
 
-# ╔═╡ 6daa07e0-6685-4c4c-b43f-c571b4e2c817
-scatter(df[!, :area], df[!, :price],
-	title = "Housing price in Hoang Mai district (2020)\n(epochs = $epochs)",
-	xlabel = "Area(square)",
-	ylabel = "Price(in billion dong)",
-	legend=false,
-	color = :cyan
-)
+# ╔═╡ daa274dc-1ada-4dc0-9100-e6cc6454a29e
+rename!(raw_df, :"Số phòng ngủ" => :number_of_bedroom)
 
-# ╔═╡ ef46f78a-bea5-430b-a60f-84f767a6d7de
-θ₀ = 0.0 # y-intercept
+# ╔═╡ 9dc61bf4-03fa-4c28-9cec-b4ee837ad3ff
+sub_df2 = @chain raw_df begin
+	# remove missing value
+    dropmissing 
+	# Extract Hoang mai district and remove "NaN" in price_per_square
+    @rsubset occursin("Hoàng Mai", :district) && !occursin("NaN", :price_per_square) && !occursin("nhiều hơn 10 phòng", :number_of_bedroom)
+	# Select only 2 columns from df
+    @select :area :price_per_square :number_of_bedroom
+end
 
-# ╔═╡ 373f6431-3c6c-4572-8e12-86cab7b42452
-θ₁ = 0.0 #slope
+# ╔═╡ 0dc21ec6-6cec-4214-865a-9354be40b39c
+string_number_df2 = @chain sub_df2 begin
+	@rtransform begin
+	:area = filter(c -> isdigit(c), :area)
+	:price_per_square = match(r"[+-]?\d+(\.\d+)?", replace(:price_per_square, "," => ".")).match
+	:number_of_bedroom = filter(x -> isdigit(x), :number_of_bedroom)
+	end
+	@transform :number_of_bedroom = replace(:number_of_bedroom, "" => missing)
+	dropmissing
+end
 
-# ╔═╡ 78aa012c-4054-4cfe-a322-775fd5167a8d
-@show h(x) = θ₀ .+ θ₁ * x # x is vector
+# ╔═╡ 827be081-4105-4f83-84ec-da489318413a
+begin 
+	float_df2 = @rtransform string_number_df2 begin
+		:area = parse(Float64, :area)
+		:price_per_square = parse(Float64, :price_per_square)
+		:number_of_bedroom = tryparse(Int64, :number_of_bedroom)
+	end
+	formatted_df2 = @chain float_df2 begin
+    
+    # Add "price" column
+	
+	@rtransform :price = :area * :price_per_square / 1000
+    @select :area :number_of_bedroom :price
+    
+	end
+end
 
-# ╔═╡ 738bd86a-66cb-47fc-a379-14ce38569bca
-plot!(X, h(X),
-	color = :blue,
-	linewidth = 3
-)
-
-# ╔═╡ 629ef46b-e10b-4a9f-946e-b9a6500dfa37
-md"""
-### Cost function
-"""
-
-# ╔═╡ a414457b-902b-4b4b-8b1f-0f652ed77729
-m = length(X)
-
-# ╔═╡ 4df84604-4f01-4631-a285-0d65b410ca5a
+# ╔═╡ 38791285-7e26-4195-a31a-eff8fdc1b4ec
 # ╠═╡ disabled = true
 #=╠═╡
-ŷ = h(X)
+scatter(formatted_df2.area, formatted_df2.number_of_bedroom, formatted_df2.price,
+	title = "Housing price in Hoang Mai district (2020)",
+	xlabel = "Area(square)",
+	ylabel = "Number of bedroom",
+	zlabel = "Price(in billion dong)",
+	legend = false
+)
   ╠═╡ =#
 
-# ╔═╡ 91b6575e-c1a4-421a-b08e-8644cf63e184
-@show J(θ₀, θ₁) = (1 / 2m) * sum((ŷ - Y) .^2 )
+# ╔═╡ ac56d2d7-a59c-4deb-a288-7a91189f4ca5
+# ╠═╡ disabled = true
+#=╠═╡
+@bind column2 Select([:area, :number_of_bedroom, :price])
+  ╠═╡ =#
 
-# ╔═╡ 1daf359a-36fe-4456-b6cc-16dfc9453865
-J_history = []
+# ╔═╡ 01f9fa2d-b44b-4fdb-aa4f-2f167011f849
+describe(formatted_df2[!, column2])
 
-# ╔═╡ 1bf04890-b86e-4285-8b2e-1e78f4498121
-push!(J_history, J)
-
-# ╔═╡ 54f8fb66-2ac2-457b-9c08-5a96b60c34fe
-md"""
-### Batch gradient descent
-"""
-
-# ╔═╡ adef3ec8-e822-4a31-abb1-c868f87ecc7f
-function partial_derivative_θ₀(X, Y)
-	(1 / m) * sum(ŷ - Y)
-end
-
-# ╔═╡ e16b8b9e-ddfb-4854-9c60-690ddc90abeb
-function partial_derivative_θ₁(X, Y)
-	(1 / m) * sum((ŷ - Y) .* X)
-end
-
-# ╔═╡ 02e46090-4871-4bdf-9325-4a4d1e2641ed
-α = 0.01
-
-# ╔═╡ a176b5eb-4e1e-409b-96eb-5ef28368066c
-for i in 1:10
-	θ₀_temp = partial_derivative_θ₀(X, Y)
-	θ₁_temp = partial_derivative_θ₁(X, Y)
-	θ₀_new -= θ₀ -  α * θ₀_temp
-	θ₁_new -= θ₁ -  α * θ₁_temp
-	new_ŷ = h(X)
-end
-
-# ╔═╡ 3b7efedf-b578-4055-9ce1-044bfca03fff
-new_ŷ = h(X)
-
-# ╔═╡ 2da31e20-aa3b-40b0-85e9-5d59df62197e
-new_J = theta_0
-
-# ╔═╡ ad8b3b9d-4712-4608-9860-f98f2b04a9c0
-plot!(X, ŷ,
-	color = :blue,
-	linewidth = 3
+# ╔═╡ a3957d07-bac9-4ef5-be95-50d406806691
+boxplot(formatted_df2[:, column2],
+	title = "Boxplot for $column2 data",
+	legend = :false,
 )
+
+# ╔═╡ 050f44c7-4b6c-4273-8573-bf17bb53bf74
+# ╠═╡ disabled = true
+#=╠═╡
+begin
+	up_outlier_number_of_bedroom = percentile(formatted_df2.number_of_bedroom, 75) + 1.5 * iqr(formatted_df2.number_of_bedroom)
+	low_outlier_number_of_bedroom = percentile(formatted_df2.number_of_bedroom, 25) - 1.5 * iqr(formatted_df2.number_of_bedroom)
+	df2 = @rsubset formatted_df2 begin 
+		low_outlier_price < :price < up_outlier_price
+		low_outlier_area < :area < up_outlier_area
+		low_outlier_number_of_bedroom < :number_of_bedroom < up_outlier_number_of_bedroom
+	end
+end
+  ╠═╡ =#
+
+# ╔═╡ b8bc2a92-161e-46c6-90f9-066cb0361c30
+@bind new_column2 Select([:area, :number_of_bedroom, :price])
+
+# ╔═╡ 93f9186d-0667-43fc-bf8c-47ae0ffe9fc2
+describe(df2[!, new_column2])
+
+# ╔═╡ bac338be-83a7-4b93-b425-226cb9c2a4ce
+boxplot(df2[:, new_column2],
+	title = "Boxplot for $new_column2 data",
+	legend = :false,
+)
+
+# ╔═╡ 670e2d8b-2941-4542-b370-06ed5158452c
+scatter3d(df2.area, df2.number_of_bedroom, df2.price,
+	title = "Housing price in Hoang Mai district (2019 - 2020)",
+	xlabel = "Area(square)",
+	ylabel = "Number of bedroom",
+	zlabel = "Price(in billion dong)",
+	legend = false
+)
+
+# ╔═╡ 5ca48307-f707-49db-bae0-627acb8f14f3
+
 
 # ╔═╡ 71976ffc-300e-4d21-b91e-2e0eebac6cfc
 md"""
@@ -736,9 +755,9 @@ version = "3.3.8+0"
 
 [[deps.GLM]]
 deps = ["Distributions", "LinearAlgebra", "Printf", "Reexport", "SparseArrays", "SpecialFunctions", "Statistics", "StatsAPI", "StatsBase", "StatsFuns", "StatsModels"]
-git-tree-sha1 = "884477b9886a52a84378275737e2823a5c98e349"
+git-tree-sha1 = "cd3e314957dc11c4c905d54d1f5a65c979e4748a"
 uuid = "38e38edf-8417-5370-95a0-9cbb8c7f171a"
-version = "1.8.1"
+version = "1.8.2"
 
 [[deps.GR]]
 deps = ["Artifacts", "Base64", "DelimitedFiles", "Downloads", "GR_jll", "HTTP", "JSON", "Libdl", "LinearAlgebra", "Pkg", "Preferences", "Printf", "Random", "Serialization", "Sockets", "TOML", "Tar", "Test", "UUIDs", "p7zip_jll"]
@@ -850,9 +869,9 @@ uuid = "3587e190-3f89-42d0-90ee-14403ec27112"
 version = "0.1.8"
 
 [[deps.InvertedIndices]]
-git-tree-sha1 = "82aec7a3dd64f4d9584659dc0b62ef7db2ef3e19"
+git-tree-sha1 = "0dc7b50b8d436461be01300fd8cd45aa0274b038"
 uuid = "41ab1584-1d38-5bbf-9106-f11c6c58b48f"
-version = "1.2.0"
+version = "1.3.0"
 
 [[deps.IrrationalConstants]]
 git-tree-sha1 = "630b497eafcc20001bba38a4651b327dcfc491d2"
@@ -1191,9 +1210,9 @@ version = "1.3.4"
 
 [[deps.Plots]]
 deps = ["Base64", "Contour", "Dates", "Downloads", "FFMPEG", "FixedPointNumbers", "GR", "JLFzf", "JSON", "LaTeXStrings", "Latexify", "LinearAlgebra", "Measures", "NaNMath", "Pkg", "PlotThemes", "PlotUtils", "Preferences", "Printf", "REPL", "Random", "RecipesBase", "RecipesPipeline", "Reexport", "RelocatableFolders", "Requires", "Scratch", "Showoff", "SnoopPrecompile", "SparseArrays", "Statistics", "StatsBase", "UUIDs", "UnicodeFun", "Unzip"]
-git-tree-sha1 = "cfcd24ebf8b066b4f8e42bade600c8558212ed83"
+git-tree-sha1 = "f49a45a239e13333b8b936120fe6d793fe58a972"
 uuid = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
-version = "1.38.7"
+version = "1.38.8"
 
 [[deps.PlutoUI]]
 deps = ["AbstractPlutoDingetjes", "Base64", "ColorTypes", "Dates", "FixedPointNumbers", "Hyperscript", "HypertextLiteral", "IOCapture", "InteractiveUtils", "JSON", "Logging", "MIMEs", "Markdown", "Random", "Reexport", "URIs", "UUIDs"]
@@ -1215,9 +1234,9 @@ version = "1.3.0"
 
 [[deps.PrettyTables]]
 deps = ["Crayons", "Formatting", "LaTeXStrings", "Markdown", "Reexport", "StringManipulation", "Tables"]
-git-tree-sha1 = "96f6db03ab535bdb901300f88335257b0018689d"
+git-tree-sha1 = "548793c7859e28ef026dba514752275ee871169f"
 uuid = "08abe8d2-0d0c-5749-adfa-8a2ac140af0d"
-version = "2.2.2"
+version = "2.2.3"
 
 [[deps.Printf]]
 deps = ["Unicode"]
@@ -1395,9 +1414,9 @@ version = "1.3.0"
 
 [[deps.StatsModels]]
 deps = ["DataAPI", "DataStructures", "LinearAlgebra", "Printf", "REPL", "ShiftedArrays", "SparseArrays", "StatsBase", "StatsFuns", "Tables"]
-git-tree-sha1 = "a5e15f27abd2692ccb61a99e0854dfb7d48017db"
+git-tree-sha1 = "06a230063087c11910e9bbd17ccbf5af792a27a4"
 uuid = "3eaba693-59b7-5ba5-a881-562e759f1c8d"
-version = "0.6.33"
+version = "0.7.0"
 
 [[deps.StatsPlots]]
 deps = ["AbstractFFTs", "Clustering", "DataStructures", "DataValues", "Distributions", "Interpolations", "KernelDensity", "LinearAlgebra", "MultivariateStats", "NaNMath", "Observables", "Plots", "RecipesBase", "RecipesPipeline", "Reexport", "StatsBase", "TableOperations", "Tables", "Widgets"]
@@ -1762,7 +1781,7 @@ version = "1.4.1+0"
 # ╠═119cda78-06d7-40b2-b9d7-fd6d06a81fda
 # ╠═cd19344e-3a89-4f67-8164-a692af1fac45
 # ╠═0a35c919-e9e7-43f1-996d-58c6659e02c8
-# ╟─027fb282-5928-42a7-8e89-e8825f9e39e0
+# ╠═027fb282-5928-42a7-8e89-e8825f9e39e0
 # ╟─4a0c56fa-cd57-47b5-aa47-39bde0e251e7
 # ╠═ec4e18b3-7d3e-44bf-9935-5501a3798010
 # ╠═6efc8bfd-db82-43e1-a447-4446b0e70d3e
@@ -1803,27 +1822,22 @@ version = "1.4.1+0"
 # ╠═6df98270-bf91-4483-b247-81aafdaa44f1
 # ╠═93275900-7c6e-48dc-b6c1-457b9c1b13ce
 # ╟─006e6c60-886a-4bfc-943d-e87bf55e2682
-# ╟─a83e15cb-6eb9-462a-9cb7-97e5fb03753f
-# ╠═5a9a5e29-5bf1-49d6-835f-5d2104dad6e7
-# ╟─6daa07e0-6685-4c4c-b43f-c571b4e2c817
-# ╠═ef46f78a-bea5-430b-a60f-84f767a6d7de
-# ╠═373f6431-3c6c-4572-8e12-86cab7b42452
-# ╠═78aa012c-4054-4cfe-a322-775fd5167a8d
-# ╠═738bd86a-66cb-47fc-a379-14ce38569bca
-# ╟─629ef46b-e10b-4a9f-946e-b9a6500dfa37
-# ╠═a414457b-902b-4b4b-8b1f-0f652ed77729
-# ╠═4df84604-4f01-4631-a285-0d65b410ca5a
-# ╟─91b6575e-c1a4-421a-b08e-8644cf63e184
-# ╠═1daf359a-36fe-4456-b6cc-16dfc9453865
-# ╠═1bf04890-b86e-4285-8b2e-1e78f4498121
-# ╟─54f8fb66-2ac2-457b-9c08-5a96b60c34fe
-# ╠═adef3ec8-e822-4a31-abb1-c868f87ecc7f
-# ╠═e16b8b9e-ddfb-4854-9c60-690ddc90abeb
-# ╠═02e46090-4871-4bdf-9325-4a4d1e2641ed
-# ╠═a176b5eb-4e1e-409b-96eb-5ef28368066c
-# ╠═3b7efedf-b578-4055-9ce1-044bfca03fff
-# ╠═2da31e20-aa3b-40b0-85e9-5d59df62197e
-# ╠═ad8b3b9d-4712-4608-9860-f98f2b04a9c0
+# ╟─2c268a1d-f091-415b-8659-9efd4e1627b1
+# ╠═5e2523fb-f24c-49af-8d16-11a2d5f39c45
+# ╠═daa274dc-1ada-4dc0-9100-e6cc6454a29e
+# ╠═9dc61bf4-03fa-4c28-9cec-b4ee837ad3ff
+# ╠═0dc21ec6-6cec-4214-865a-9354be40b39c
+# ╠═827be081-4105-4f83-84ec-da489318413a
+# ╠═38791285-7e26-4195-a31a-eff8fdc1b4ec
+# ╠═ac56d2d7-a59c-4deb-a288-7a91189f4ca5
+# ╟─01f9fa2d-b44b-4fdb-aa4f-2f167011f849
+# ╟─a3957d07-bac9-4ef5-be95-50d406806691
+# ╠═050f44c7-4b6c-4273-8573-bf17bb53bf74
+# ╟─b8bc2a92-161e-46c6-90f9-066cb0361c30
+# ╟─93f9186d-0667-43fc-bf8c-47ae0ffe9fc2
+# ╟─bac338be-83a7-4b93-b425-226cb9c2a4ce
+# ╟─670e2d8b-2941-4542-b370-06ed5158452c
+# ╠═5ca48307-f707-49db-bae0-627acb8f14f3
 # ╟─71976ffc-300e-4d21-b91e-2e0eebac6cfc
 # ╠═82923e10-b8ba-49e1-81ef-7856d393685c
 # ╠═3303e824-1b49-4865-83e2-274b59f9f5f1
