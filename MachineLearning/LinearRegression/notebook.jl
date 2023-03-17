@@ -14,9 +14,6 @@ macro bind(def, element)
     end
 end
 
-# ╔═╡ 85b2d40f-9b6c-441c-bf6f-837b1ffcd40d
-import Pkg; Pkg.resolve(); Pkg.update();
-
 # ╔═╡ 449e934d-91c6-4569-bf81-5168a61d46ff
 using DataFrames, CSV, DataFramesMeta, HTTP, PlutoUI, StatsBase, Plots, StatsPlots;
 
@@ -50,8 +47,18 @@ md"""
 # ╔═╡ 0614e56e-ff63-439d-aed6-151a5d1c161e
 describe(raw_df)
 
+# ╔═╡ 148f0994-cce2-406c-97d3-8fff42ad4c14
+md"""
+### Rename the columns in raw_df
+"""
+
 # ╔═╡ e2a5efd1-6927-4ac1-9eaa-72c9eb13af98
 rename!(raw_df, Dict("Diện tích" => "area", "Giá/m2" => "price_per_square", "Quận" => "district"))
+
+# ╔═╡ fe87388c-0b5a-41f6-b381-9c8960830f92
+md"""
+### Extract sub\_df from raw\_df
+"""
 
 # ╔═╡ b3f1a018-e129-4507-9363-ccdf8f1b80ce
 sub_df = @chain raw_df begin
@@ -62,6 +69,11 @@ sub_df = @chain raw_df begin
 	# Select only 2 columns from df 
     @select :area :price_per_square
 end
+
+# ╔═╡ 96a80f1b-1f39-4faf-8885-af5a91b6d958
+md"""
+### Extract number from data
+"""
 
 # ╔═╡ aa7303c6-3a7e-45c1-ad64-ed7c65e867e0
 string_number_df = @rtransform sub_df begin
@@ -75,6 +87,11 @@ float_df = @rtransform string_number_df begin
 	:price_per_square = parse(Float64, :price_per_square)
 end
 
+# ╔═╡ 31f10884-0edd-4a6b-8f19-552bba7e44a3
+md"""
+### Data normalization
+"""
+
 # ╔═╡ cd19344e-3a89-4f67-8164-a692af1fac45
 formatted_df = @chain float_df begin
     
@@ -86,6 +103,16 @@ formatted_df = @chain float_df begin
     
 end
 
+# ╔═╡ 59cbf361-7617-4742-a7de-fbeadcbc7cd1
+md"""
+## Data Visualization
+"""
+
+# ╔═╡ 80d04ce4-b04f-40b6-ae46-83220e8ad254
+md"""
+### Plot before handling 
+"""
+
 # ╔═╡ 0a35c919-e9e7-43f1-996d-58c6659e02c8
 scatter(formatted_df[!, :area], formatted_df[!, :price],
 	title = "Housing price in Hoang Mai district (2019 - 2020)",
@@ -93,6 +120,16 @@ scatter(formatted_df[!, :area], formatted_df[!, :price],
 	ylabel = "Price(in billion dong)",
 	legend=false
 )
+
+# ╔═╡ 162375e9-09b4-4728-9e5f-0c8b67650cc0
+md"""
+### Use boxplots to handle outliers
+"""
+
+# ╔═╡ 8b3d6c2e-fb98-4ef6-ac9e-7ead6a2227f0
+md"""
+#### Before
+"""
 
 # ╔═╡ 027fb282-5928-42a7-8e89-e8825f9e39e0
 @bind column Select([:area, :price])
@@ -118,6 +155,11 @@ begin
 	end
 end
 
+# ╔═╡ 085a094d-03da-4419-a223-b45f314c425e
+md"""
+#### After
+"""
+
 # ╔═╡ 1b2d03b9-e91e-49ed-94a0-9c38604b3fc2
 @bind new_column Select([:area, :price])
 
@@ -130,32 +172,37 @@ boxplot(df[:, new_column],
 	legend = :false,
 )
 
+# ╔═╡ effa328c-73b2-41d1-8824-110678ca7506
+md"""
+### Plot after handling
+"""
+
 # ╔═╡ 9fdf0c3d-c3be-43f6-a501-6aced05971cf
 scatter(df[!, :area], df[!, :price],
 	title = "Housing price in Hoang Mai district (2019 - 2020)",
 	xlabel = "Area(square)",
 	ylabel = "Price(in billion dong)",
-	legend=false,
-	color = :cyan
+	color = :cyan,
+	label = false
 )
 
 # ╔═╡ 067be4c0-4572-4731-8dc8-d828ad5bb9e9
 md"""
-## Linear Regression Approach
+## Single Linear Regression
 """
 
 # ╔═╡ 9be3b4c4-8906-48fe-9ecb-d1088298bed3
-X = df.area
+x = df.area
 
 # ╔═╡ 87fba0c9-6b37-42e7-b921-a0806fb717dd
-Y =  df.price;
+y =  df.price
 
 # ╔═╡ 5f8c3ea0-9652-4af8-b29b-bec4a601b9ad
-n = length(X)
+n = length(x)
 
 # ╔═╡ 79d709ac-50db-4864-b4ee-b93b9d0746ad
 md"""
-#### Pure Math
+### Pure Math
 """
 
 # ╔═╡ 0c12745d-bfb5-4934-8556-a71904292cdb
@@ -180,7 +227,7 @@ $$\sum_{i = 1}^nx_i^2$$
 """
 
 # ╔═╡ 588b390a-f62f-47ce-8521-fafb6a41a125
-sum_x² = sum(X.^2)
+sum_x² = sum(x.^2)
 
 # ╔═╡ 140790ac-dd7d-4601-a0ac-6e9405644dbc
 md"""
@@ -188,7 +235,7 @@ $$\sum_{i = 1}^ny_i^2$$
 """
 
 # ╔═╡ 464d81f6-b655-44d3-8148-08cab6dcad0e
-sum_y² = sum(Y.^2)
+sum_y² = sum(y.^2)
 
 # ╔═╡ a279ddb8-3769-45dd-848d-8ea1d45fd299
 md"""
@@ -196,7 +243,7 @@ $$\sum_{i = 1}^nx_iy_i$$
 """
 
 # ╔═╡ 4d904862-3a45-4ee0-a8a9-fd0ef65f12c0
-sum_xy = sum(X .* Y)
+sum_xy = sum(x .* y)
 
 # ╔═╡ 978299df-5721-44a0-a976-434e648ead58
 md"""
@@ -236,37 +283,41 @@ $$\hat y = \hat \beta_0 + \hat \beta_1x$$
 """
 
 # ╔═╡ 62d1e434-1fce-4b3b-81cb-3652f8de0425
-ŷ = β̂₀ .+ β̂₁ .* X
+ŷ(x) = β̂₀ .+ β̂₁ .* x
 
 # ╔═╡ e0c82598-9c71-426e-963f-fe87cf1ff641
-plot!(X, ŷ,
+plot!(x, ŷ(x),
 	color = :red,
 	linewidth = 3,
+	label = "Pure Math"
 )
 
 # ╔═╡ 6e7679e0-d6f6-4ff1-92b5-0cd749463c4a
 md"""
-#### Using GLM library
+### Using GLM library
 """
 
-# ╔═╡ 5516b510-b90c-47e3-83e9-ee6a049ed8b0
-table = Table(X = X, Y = Y);
-
 # ╔═╡ b29bc539-d77b-402a-9972-68f8a4878749
-ordinary_least_square = lm(@formula(Y ~ X), table)
+ordinary_least_square = lm(@formula(price ~ area), df)
 
 # ╔═╡ 6df98270-bf91-4483-b247-81aafdaa44f1
-plot!(X, predict(ordinary_least_square),
+plot!(x, predict(ordinary_least_square),
 	color = :yellow,
 	linewidth = 3,
+	label = "GLM package"
 )
+
+# ╔═╡ 5a245c40-984f-475b-a5ac-6a066c2b741e
+md"""
+### Make prediction from model
+"""
 
 # ╔═╡ 93275900-7c6e-48dc-b6c1-457b9c1b13ce
 @bind desire NumberField(0:10_000, default=40)
 
 # ╔═╡ 006e6c60-886a-4bfc-943d-e87bf55e2682
 try
-	"The house price corresponding to the $(desire)/m2 approximate: $(round((predict(ordinary_least_square, Table(X = [desire])))[1]; digits = 2)) billion dong"
+	"The house price corresponding to the $(desire)/m2 approximate: $(round(ŷ(desire), digits = 2)) billion dong"
 catch e
 	"Please type some number"
 end
@@ -315,14 +366,13 @@ begin
     # Add "price" column
 	
 	@rtransform :price = :area * :price_per_square / 1000
+	@rtransform :number_of_bedroom = Int64(:number_of_bedroom)
     @select :area :number_of_bedroom :price
     
 	end
 end
 
 # ╔═╡ 38791285-7e26-4195-a31a-eff8fdc1b4ec
-# ╠═╡ disabled = true
-#=╠═╡
 scatter(formatted_df2.area, formatted_df2.number_of_bedroom, formatted_df2.price,
 	title = "Housing price in Hoang Mai district (2020)",
 	xlabel = "Area(square)",
@@ -330,13 +380,9 @@ scatter(formatted_df2.area, formatted_df2.number_of_bedroom, formatted_df2.price
 	zlabel = "Price(in billion dong)",
 	legend = false
 )
-  ╠═╡ =#
 
 # ╔═╡ ac56d2d7-a59c-4deb-a288-7a91189f4ca5
-# ╠═╡ disabled = true
-#=╠═╡
 @bind column2 Select([:area, :number_of_bedroom, :price])
-  ╠═╡ =#
 
 # ╔═╡ 01f9fa2d-b44b-4fdb-aa4f-2f167011f849
 describe(formatted_df2[!, column2])
@@ -348,8 +394,6 @@ boxplot(formatted_df2[:, column2],
 )
 
 # ╔═╡ 050f44c7-4b6c-4273-8573-bf17bb53bf74
-# ╠═╡ disabled = true
-#=╠═╡
 begin
 	up_outlier_number_of_bedroom = percentile(formatted_df2.number_of_bedroom, 75) + 1.5 * iqr(formatted_df2.number_of_bedroom)
 	low_outlier_number_of_bedroom = percentile(formatted_df2.number_of_bedroom, 25) - 1.5 * iqr(formatted_df2.number_of_bedroom)
@@ -359,7 +403,6 @@ begin
 		low_outlier_number_of_bedroom < :number_of_bedroom < up_outlier_number_of_bedroom
 	end
 end
-  ╠═╡ =#
 
 # ╔═╡ b8bc2a92-161e-46c6-90f9-066cb0361c30
 @bind new_column2 Select([:area, :number_of_bedroom, :price])
@@ -379,11 +422,86 @@ scatter3d(df2.area, df2.number_of_bedroom, df2.price,
 	xlabel = "Area(square)",
 	ylabel = "Number of bedroom",
 	zlabel = "Price(in billion dong)",
-	legend = false
+	label = false
 )
 
-# ╔═╡ 5ca48307-f707-49db-bae0-627acb8f14f3
+# ╔═╡ 5517851e-92eb-4c80-aced-1eed968e09ba
+md"""
+### Matrix approach
+"""
 
+# ╔═╡ f255d2a8-073d-4a53-8223-2c69fc1ac206
+X₁ = df2.area
+
+# ╔═╡ 3cdab65d-7372-4f8a-be69-6fcb2b33fd86
+X₂ =  df2.number_of_bedroom
+
+# ╔═╡ b9093259-e6be-4bc1-bb81-ca6d1df19601
+md"""
+$$\textbf{y} = \textbf{X}\boldsymbol{\beta} + \boldsymbol{\epsilon}$$
+"""
+
+# ╔═╡ 7b441b28-c632-4d6d-bad5-cdacfec0469a
+md"""
+$$\textit{L}  = \sum_{i=1}^{n} \epsilon_i^2 = \sum_{i=1}^{n} (y_i - \beta_0 - \sum_{j=1}^{k} \beta_j x_{ij})^2$$
+"""
+
+# ╔═╡ 5c8be02b-0bd9-4a5f-a9cf-235ec1bb1b31
+md"""
+$$\boldsymbol{\hat \beta} = (\boldsymbol{X}^T\boldsymbol{X})⁻¹\boldsymbol{X}^T\textbf{y}$$
+"""
+
+# ╔═╡ 7eea96d4-5657-4d13-9f8f-761a6fa06188
+Y = df2.price
+
+# ╔═╡ a76b6382-fc17-48ad-8959-827477717e60
+X = [ones(size(df2.area)) df2.area df2.number_of_bedroom]
+
+# ╔═╡ 27fd64d8-77c0-4aea-af2a-c1a91c9b7706
+β̂ = (X'X)^-1 * X' * Y
+
+# ╔═╡ 46ea3a9a-86c9-4609-a90e-9dd64ad8b954
+md"""
+$$\textbf{ŷ} = \textbf{X}\boldsymbol{\hat \beta}$$
+"""
+
+# ╔═╡ 9f6763ad-7587-4bcd-b4ef-15adb9610183
+ŷ2(X) = X * β̂
+
+# ╔═╡ 9d97f98b-4516-4243-9ed4-0820f8b8289c
+plot!(X₁, X₂, ŷ2(X),
+	color = :red,
+	linewidth = 3,
+	label = "Matrix approach"
+)
+
+# ╔═╡ 6054d5d8-5ee4-495d-be71-585e152e7d36
+md"""
+### Using GLM library
+"""
+
+# ╔═╡ 6d0c828f-b22a-4737-9580-2c36c5448e9f
+ols = lm(@formula(price ~ area + number_of_bedroom), df2)
+
+# ╔═╡ b81acf33-ab6a-4bac-ac2c-d533d11d24b6
+plot!(X₁, X₂, predict(ols),
+	color = :yellow,
+	linewidth = 3,
+	label = "GLM package"
+)
+
+# ╔═╡ 340abe03-7cc4-4fb7-93e1-8d4e503b3ec8
+@bind dientich NumberField(0:10_000, default = 40)
+
+# ╔═╡ 1cadd8cf-c99e-49ac-8831-b26105858247
+@bind so_phong NumberField(0:10, default = 4)
+
+# ╔═╡ 078dfb5e-8337-40ef-8b6c-dcae59a34f56
+try
+	"The house price corresponding to $(dientich)/m2 and $(so_phong) room(s) approximate: $(round(ŷ2([1 dientich so_phong])[1], digits=2)) billion dong"
+catch e
+	"Please type some number"
+end
 
 # ╔═╡ 71976ffc-300e-4d21-b91e-2e0eebac6cfc
 md"""
@@ -404,7 +522,6 @@ DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 DataFramesMeta = "1313f7d8-7da2-5740-9ea0-a2ca25f37964"
 GLM = "38e38edf-8417-5370-95a0-9cbb8c7f171a"
 HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
-Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
@@ -415,9 +532,9 @@ TypedTables = "9d95f2ec-7b3d-5a63-8d20-e2491e220bb9"
 CSV = "~0.10.9"
 DataFrames = "~1.5.0"
 DataFramesMeta = "~0.13.0"
-GLM = "~1.8.1"
+GLM = "~1.8.2"
 HTTP = "~1.7.4"
-Plots = "~1.38.7"
+Plots = "~1.38.8"
 PlutoUI = "~0.7.50"
 StatsBase = "~0.33.21"
 StatsPlots = "~0.15.4"
@@ -428,15 +545,19 @@ TypedTables = "~1.4.1"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.8.5"
+julia_version = "1.9.0-rc1"
 manifest_format = "2.0"
-project_hash = "c2c893fcd5458f974d6e85cae38b62ba9b6c7ec5"
+project_hash = "c85d255c0c59c34042d410f2fbd77e129850a4e7"
 
 [[deps.AbstractFFTs]]
-deps = ["ChainRulesCore", "LinearAlgebra"]
+deps = ["LinearAlgebra"]
 git-tree-sha1 = "16b6dbc4cf7caee4e1e75c49485ec67b667098a0"
 uuid = "621f4979-c628-5d54-868e-fcf4e3e8185c"
 version = "1.3.1"
+weakdeps = ["ChainRulesCore"]
+
+    [deps.AbstractFFTs.extensions]
+    AbstractFFTsChainRulesCoreExt = "ChainRulesCore"
 
 [[deps.AbstractPlutoDingetjes]]
 deps = ["Pkg"]
@@ -449,6 +570,10 @@ deps = ["LinearAlgebra", "Requires"]
 git-tree-sha1 = "cc37d689f599e8df4f464b2fa3870ff7db7492ef"
 uuid = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
 version = "3.6.1"
+weakdeps = ["StaticArrays"]
+
+    [deps.Adapt.extensions]
+    AdaptStaticArraysExt = "StaticArrays"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -518,12 +643,6 @@ git-tree-sha1 = "c6d890a52d2c4d55d326439580c3b8d0875a77d9"
 uuid = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 version = "1.15.7"
 
-[[deps.ChangesOfVariables]]
-deps = ["ChainRulesCore", "LinearAlgebra", "Test"]
-git-tree-sha1 = "485193efd2176b88e6622a39a246f8c5b600e74e"
-uuid = "9e997f8a-9a97-42d5-a9f1-ce6bfc15e2c0"
-version = "0.1.6"
-
 [[deps.Clustering]]
 deps = ["Distances", "LinearAlgebra", "NearestNeighbors", "Printf", "Random", "SparseArrays", "Statistics", "StatsBase"]
 git-tree-sha1 = "64df3da1d2a26f4de23871cd1b6482bb68092bd5"
@@ -561,15 +680,19 @@ uuid = "5ae59095-9a9b-59fe-a467-6f913c188581"
 version = "0.12.10"
 
 [[deps.Compat]]
-deps = ["Dates", "LinearAlgebra", "UUIDs"]
+deps = ["UUIDs"]
 git-tree-sha1 = "7a60c856b9fa189eb34f5f8a6f6b5529b7942957"
 uuid = "34da2185-b29b-5c13-b0c7-acf172513d20"
 version = "4.6.1"
+weakdeps = ["Dates", "LinearAlgebra"]
+
+    [deps.Compat.extensions]
+    CompatLinearAlgebraExt = "LinearAlgebra"
 
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
-version = "1.0.1+0"
+version = "1.0.2+0"
 
 [[deps.Contour]]
 git-tree-sha1 = "d05d9e7b7aedff4e5b51a029dced05cfb6125781"
@@ -621,13 +744,9 @@ uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
 
 [[deps.DelimitedFiles]]
 deps = ["Mmap"]
+git-tree-sha1 = "9e2f36d3c96a820c678f2f1f1782582fcf685bae"
 uuid = "8bb1440f-4735-579b-a4ab-409b98df4dab"
-
-[[deps.DensityInterface]]
-deps = ["InverseFunctions", "Test"]
-git-tree-sha1 = "80c3e8639e3353e5d2912fb3a1916b8455e2494b"
-uuid = "b429d917-457f-4dbc-8f4c-0cc954292b1d"
-version = "0.4.0"
+version = "1.9.1"
 
 [[deps.Dictionaries]]
 deps = ["Indexing", "Random", "Serialization"]
@@ -646,10 +765,18 @@ deps = ["Random", "Serialization", "Sockets"]
 uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 
 [[deps.Distributions]]
-deps = ["ChainRulesCore", "DensityInterface", "FillArrays", "LinearAlgebra", "PDMats", "Printf", "QuadGK", "Random", "SparseArrays", "SpecialFunctions", "Statistics", "StatsBase", "StatsFuns", "Test"]
+deps = ["FillArrays", "LinearAlgebra", "PDMats", "Printf", "QuadGK", "Random", "SparseArrays", "SpecialFunctions", "Statistics", "StatsBase", "StatsFuns", "Test"]
 git-tree-sha1 = "da9e1a9058f8d3eec3a8c9fe4faacfb89180066b"
 uuid = "31c24e10-a181-5473-b8eb-7969acd0382f"
 version = "0.25.86"
+
+    [deps.Distributions.extensions]
+    DistributionsChainRulesCoreExt = "ChainRulesCore"
+    DistributionsDensityInterfaceExt = "DensityInterface"
+
+    [deps.Distributions.weakdeps]
+    ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
+    DensityInterface = "b429d917-457f-4dbc-8f4c-0cc954292b1d"
 
 [[deps.DocStringExtensions]]
 deps = ["LibGit2"]
@@ -709,9 +836,9 @@ uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
 
 [[deps.FillArrays]]
 deps = ["LinearAlgebra", "Random", "SparseArrays", "Statistics"]
-git-tree-sha1 = "d3ba08ab64bdfd27234d3f61956c966266757fe6"
+git-tree-sha1 = "9dec0199898d4d5c1d1b257cbf2cc498afe03a2a"
 uuid = "1a297f60-69ca-5386-bcde-b61e274b549b"
-version = "0.13.7"
+version = "0.13.8"
 
 [[deps.FixedPointNumbers]]
 deps = ["Statistics"]
@@ -862,12 +989,6 @@ git-tree-sha1 = "721ec2cf720536ad005cb38f50dbba7b02419a15"
 uuid = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
 version = "0.14.7"
 
-[[deps.InverseFunctions]]
-deps = ["Test"]
-git-tree-sha1 = "49510dfcb407e572524ba94aeae2fced1f3feb0f"
-uuid = "3587e190-3f89-42d0-90ee-14403ec27112"
-version = "0.1.8"
-
 [[deps.InvertedIndices]]
 git-tree-sha1 = "0dc7b50b8d436461be01300fd8cd45aa0274b038"
 uuid = "41ab1584-1d38-5bbf-9106-f11c6c58b48f"
@@ -1017,14 +1138,24 @@ uuid = "38a345b3-de98-5d2b-a5d3-14cd9215e700"
 version = "2.36.0+0"
 
 [[deps.LinearAlgebra]]
-deps = ["Libdl", "libblastrampoline_jll"]
+deps = ["Libdl", "OpenBLAS_jll", "libblastrampoline_jll"]
 uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [[deps.LogExpFunctions]]
-deps = ["ChainRulesCore", "ChangesOfVariables", "DocStringExtensions", "InverseFunctions", "IrrationalConstants", "LinearAlgebra"]
+deps = ["DocStringExtensions", "IrrationalConstants", "LinearAlgebra"]
 git-tree-sha1 = "0a1b7c2863e44523180fdb3146534e265a91870b"
 uuid = "2ab3a3ac-af41-5b50-aa03-7779005ae688"
 version = "0.3.23"
+
+    [deps.LogExpFunctions.extensions]
+    LogExpFunctionsChainRulesCoreExt = "ChainRulesCore"
+    LogExpFunctionsChangesOfVariablesExt = "ChangesOfVariables"
+    LogExpFunctionsInverseFunctionsExt = "InverseFunctions"
+
+    [deps.LogExpFunctions.weakdeps]
+    ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
+    ChangesOfVariables = "9e997f8a-9a97-42d5-a9f1-ce6bfc15e2c0"
+    InverseFunctions = "3587e190-3f89-42d0-90ee-14403ec27112"
 
 [[deps.Logging]]
 uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
@@ -1065,7 +1196,7 @@ version = "1.1.7"
 [[deps.MbedTLS_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "c8ffd9c3-330d-5841-b78e-0817d7145fa1"
-version = "2.28.0+0"
+version = "2.28.2+0"
 
 [[deps.Measures]]
 git-tree-sha1 = "c13304c81eec1ed3af7fc20e75fb6b26092a1102"
@@ -1083,7 +1214,7 @@ uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 
 [[deps.MozillaCACerts_jll]]
 uuid = "14a3606d-f60d-562e-9121-12d972cd8159"
-version = "2022.2.1"
+version = "2022.10.11"
 
 [[deps.MultivariateStats]]
 deps = ["Arpack", "LinearAlgebra", "SparseArrays", "Statistics", "StatsAPI", "StatsBase"]
@@ -1127,7 +1258,7 @@ version = "1.3.5+1"
 [[deps.OpenBLAS_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Libdl"]
 uuid = "4536629a-c528-5b80-bd46-f80d51c5b363"
-version = "0.3.20+0"
+version = "0.3.21+4"
 
 [[deps.OpenLibm_jll]]
 deps = ["Artifacts", "Libdl"]
@@ -1166,7 +1297,7 @@ version = "1.4.1"
 [[deps.PCRE2_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "efcefdf7-47ab-520b-bdef-62a2eaa19f15"
-version = "10.40.0+0"
+version = "10.42.0+0"
 
 [[deps.PDMats]]
 deps = ["LinearAlgebra", "SparseArrays", "SuiteSparse"]
@@ -1192,9 +1323,9 @@ uuid = "30392449-352a-5448-841d-b1acce4e97dc"
 version = "0.40.1+0"
 
 [[deps.Pkg]]
-deps = ["Artifacts", "Dates", "Downloads", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "Serialization", "TOML", "Tar", "UUIDs", "p7zip_jll"]
+deps = ["Artifacts", "Dates", "Downloads", "FileWatching", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "Serialization", "TOML", "Tar", "UUIDs", "p7zip_jll"]
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
-version = "1.8.0"
+version = "1.9.0"
 
 [[deps.PlotThemes]]
 deps = ["PlotUtils", "Statistics"]
@@ -1213,6 +1344,20 @@ deps = ["Base64", "Contour", "Dates", "Downloads", "FFMPEG", "FixedPointNumbers"
 git-tree-sha1 = "f49a45a239e13333b8b936120fe6d793fe58a972"
 uuid = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 version = "1.38.8"
+
+    [deps.Plots.extensions]
+    FileIOExt = "FileIO"
+    GeometryBasicsExt = "GeometryBasics"
+    IJuliaExt = "IJulia"
+    ImageInTerminalExt = "ImageInTerminal"
+    UnitfulExt = "Unitful"
+
+    [deps.Plots.weakdeps]
+    FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
+    GeometryBasics = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
+    IJulia = "7073ff75-c697-5162-941a-fcdaad2a7d2a"
+    ImageInTerminal = "d8c32880-2388-543b-8c61-d9f865259254"
+    Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 
 [[deps.PlutoUI]]
 deps = ["AbstractPlutoDingetjes", "Base64", "ColorTypes", "Dates", "FixedPointNumbers", "Hyperscript", "HypertextLiteral", "IOCapture", "InteractiveUtils", "JSON", "Logging", "MIMEs", "Markdown", "Random", "Reexport", "URIs", "UUIDs"]
@@ -1364,14 +1509,18 @@ uuid = "a2af1166-a08f-5f64-846c-94a0d3cef48c"
 version = "1.1.0"
 
 [[deps.SparseArrays]]
-deps = ["LinearAlgebra", "Random"]
+deps = ["Libdl", "LinearAlgebra", "Random", "Serialization", "SuiteSparse_jll"]
 uuid = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [[deps.SpecialFunctions]]
-deps = ["ChainRulesCore", "IrrationalConstants", "LogExpFunctions", "OpenLibm_jll", "OpenSpecFun_jll"]
+deps = ["IrrationalConstants", "LogExpFunctions", "OpenLibm_jll", "OpenSpecFun_jll"]
 git-tree-sha1 = "ef28127915f4229c971eb43f3fc075dd3fe91880"
 uuid = "276daf66-3868-5448-9aa4-cd146d93841b"
 version = "2.2.0"
+weakdeps = ["ChainRulesCore"]
+
+    [deps.SpecialFunctions.extensions]
+    SpecialFunctionsChainRulesCoreExt = "ChainRulesCore"
 
 [[deps.SplitApplyCombine]]
 deps = ["Dictionaries", "Indexing"]
@@ -1393,6 +1542,7 @@ version = "1.4.0"
 [[deps.Statistics]]
 deps = ["LinearAlgebra", "SparseArrays"]
 uuid = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+version = "1.9.0"
 
 [[deps.StatsAPI]]
 deps = ["LinearAlgebra"]
@@ -1407,10 +1557,18 @@ uuid = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 version = "0.33.21"
 
 [[deps.StatsFuns]]
-deps = ["ChainRulesCore", "HypergeometricFunctions", "InverseFunctions", "IrrationalConstants", "LogExpFunctions", "Reexport", "Rmath", "SpecialFunctions"]
+deps = ["HypergeometricFunctions", "IrrationalConstants", "LogExpFunctions", "Reexport", "Rmath", "SpecialFunctions"]
 git-tree-sha1 = "f625d686d5a88bcd2b15cd81f18f98186fdc0c9a"
 uuid = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
 version = "1.3.0"
+
+    [deps.StatsFuns.extensions]
+    StatsFunsChainRulesCoreExt = "ChainRulesCore"
+    StatsFunsInverseFunctionsExt = "InverseFunctions"
+
+    [deps.StatsFuns.weakdeps]
+    ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
+    InverseFunctions = "3587e190-3f89-42d0-90ee-14403ec27112"
 
 [[deps.StatsModels]]
 deps = ["DataAPI", "DataStructures", "LinearAlgebra", "Printf", "REPL", "ShiftedArrays", "SparseArrays", "StatsBase", "StatsFuns", "Tables"]
@@ -1433,10 +1591,15 @@ version = "0.3.0"
 deps = ["Libdl", "LinearAlgebra", "Serialization", "SparseArrays"]
 uuid = "4607b0f0-06f3-5cda-b6b1-a6196a1729e9"
 
+[[deps.SuiteSparse_jll]]
+deps = ["Artifacts", "Libdl", "Pkg", "libblastrampoline_jll"]
+uuid = "bea87d4a-7f5b-5778-9afe-8cc45184846c"
+version = "5.10.1+6"
+
 [[deps.TOML]]
 deps = ["Dates"]
 uuid = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
-version = "1.0.0"
+version = "1.0.3"
 
 [[deps.TableOperations]]
 deps = ["SentinelArrays", "Tables", "Test"]
@@ -1459,7 +1622,7 @@ version = "1.10.1"
 [[deps.Tar]]
 deps = ["ArgTools", "SHA"]
 uuid = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
-version = "1.10.1"
+version = "1.10.0"
 
 [[deps.TensorCore]]
 deps = ["LinearAlgebra"]
@@ -1687,7 +1850,7 @@ version = "1.4.0+3"
 [[deps.Zlib_jll]]
 deps = ["Libdl"]
 uuid = "83775a58-1f1d-513f-b197-d71354ab007a"
-version = "1.2.12+3"
+version = "1.2.13+0"
 
 [[deps.Zstd_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -1714,9 +1877,9 @@ uuid = "0ac62f75-1d6f-5e53-bd7c-93b484bb37c0"
 version = "0.15.1+0"
 
 [[deps.libblastrampoline_jll]]
-deps = ["Artifacts", "Libdl", "OpenBLAS_jll"]
+deps = ["Artifacts", "Libdl"]
 uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
-version = "5.1.1+0"
+version = "5.4.0+0"
 
 [[deps.libfdk_aac_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1767,7 +1930,6 @@ version = "1.4.1+0"
 
 # ╔═╡ Cell order:
 # ╟─c01f2140-03aa-4f4f-9527-308263ebabb1
-# ╠═85b2d40f-9b6c-441c-bf6f-837b1ffcd40d
 # ╠═449e934d-91c6-4569-bf81-5168a61d46ff
 # ╟─bd7f95cf-994e-4e03-93a8-0add0826f4c5
 # ╠═ada5ae54-acda-4c98-9c46-3194a7528961
@@ -1775,25 +1937,34 @@ version = "1.4.1+0"
 # ╠═3fefbdc5-d0fa-4b19-82f3-e41a36560fa8
 # ╟─952673f4-6171-4a2d-87c9-4bd8311f4afb
 # ╠═0614e56e-ff63-439d-aed6-151a5d1c161e
+# ╟─148f0994-cce2-406c-97d3-8fff42ad4c14
 # ╠═e2a5efd1-6927-4ac1-9eaa-72c9eb13af98
+# ╟─fe87388c-0b5a-41f6-b381-9c8960830f92
 # ╠═b3f1a018-e129-4507-9363-ccdf8f1b80ce
+# ╟─96a80f1b-1f39-4faf-8885-af5a91b6d958
 # ╠═aa7303c6-3a7e-45c1-ad64-ed7c65e867e0
 # ╠═119cda78-06d7-40b2-b9d7-fd6d06a81fda
+# ╟─31f10884-0edd-4a6b-8f19-552bba7e44a3
 # ╠═cd19344e-3a89-4f67-8164-a692af1fac45
+# ╟─59cbf361-7617-4742-a7de-fbeadcbc7cd1
+# ╟─80d04ce4-b04f-40b6-ae46-83220e8ad254
 # ╠═0a35c919-e9e7-43f1-996d-58c6659e02c8
+# ╟─162375e9-09b4-4728-9e5f-0c8b67650cc0
+# ╟─8b3d6c2e-fb98-4ef6-ac9e-7ead6a2227f0
 # ╠═027fb282-5928-42a7-8e89-e8825f9e39e0
 # ╟─4a0c56fa-cd57-47b5-aa47-39bde0e251e7
 # ╠═ec4e18b3-7d3e-44bf-9935-5501a3798010
 # ╠═6efc8bfd-db82-43e1-a447-4446b0e70d3e
+# ╟─085a094d-03da-4419-a223-b45f314c425e
 # ╠═1b2d03b9-e91e-49ed-94a0-9c38604b3fc2
 # ╟─6934bcde-c0c7-4a45-9297-f150714a29ca
 # ╟─2cd91ba4-fdbc-4cee-8d61-9eb720b45069
+# ╟─effa328c-73b2-41d1-8824-110678ca7506
 # ╠═9fdf0c3d-c3be-43f6-a501-6aced05971cf
 # ╟─067be4c0-4572-4731-8dc8-d828ad5bb9e9
-# ╠═a19b6a65-5675-40cd-9b8c-d7ed5b10eae8
-# ╠═9be3b4c4-8906-48fe-9ecb-d1088298bed3
-# ╠═87fba0c9-6b37-42e7-b921-a0806fb717dd
-# ╠═5f8c3ea0-9652-4af8-b29b-bec4a601b9ad
+# ╟─9be3b4c4-8906-48fe-9ecb-d1088298bed3
+# ╟─87fba0c9-6b37-42e7-b921-a0806fb717dd
+# ╟─5f8c3ea0-9652-4af8-b29b-bec4a601b9ad
 # ╟─79d709ac-50db-4864-b4ee-b93b9d0746ad
 # ╟─0c12745d-bfb5-4934-8556-a71904292cdb
 # ╟─dceac795-e899-4be2-9650-551216d81dbb
@@ -1804,7 +1975,7 @@ version = "1.4.1+0"
 # ╟─140790ac-dd7d-4601-a0ac-6e9405644dbc
 # ╟─464d81f6-b655-44d3-8148-08cab6dcad0e
 # ╟─a279ddb8-3769-45dd-848d-8ea1d45fd299
-# ╟─4d904862-3a45-4ee0-a8a9-fd0ef65f12c0
+# ╠═4d904862-3a45-4ee0-a8a9-fd0ef65f12c0
 # ╟─978299df-5721-44a0-a976-434e648ead58
 # ╠═a161d34f-af1f-4960-818f-aecc919885cb
 # ╟─510aa47c-d1e6-40d3-8d23-3c1def9499a9
@@ -1817,9 +1988,10 @@ version = "1.4.1+0"
 # ╠═62d1e434-1fce-4b3b-81cb-3652f8de0425
 # ╠═e0c82598-9c71-426e-963f-fe87cf1ff641
 # ╟─6e7679e0-d6f6-4ff1-92b5-0cd749463c4a
-# ╠═5516b510-b90c-47e3-83e9-ee6a049ed8b0
-# ╟─b29bc539-d77b-402a-9972-68f8a4878749
+# ╠═a19b6a65-5675-40cd-9b8c-d7ed5b10eae8
+# ╠═b29bc539-d77b-402a-9972-68f8a4878749
 # ╠═6df98270-bf91-4483-b247-81aafdaa44f1
+# ╟─5a245c40-984f-475b-a5ac-6a066c2b741e
 # ╠═93275900-7c6e-48dc-b6c1-457b9c1b13ce
 # ╟─006e6c60-886a-4bfc-943d-e87bf55e2682
 # ╟─2c268a1d-f091-415b-8659-9efd4e1627b1
@@ -1830,16 +2002,33 @@ version = "1.4.1+0"
 # ╠═827be081-4105-4f83-84ec-da489318413a
 # ╠═38791285-7e26-4195-a31a-eff8fdc1b4ec
 # ╠═ac56d2d7-a59c-4deb-a288-7a91189f4ca5
-# ╟─01f9fa2d-b44b-4fdb-aa4f-2f167011f849
-# ╟─a3957d07-bac9-4ef5-be95-50d406806691
+# ╠═01f9fa2d-b44b-4fdb-aa4f-2f167011f849
+# ╠═a3957d07-bac9-4ef5-be95-50d406806691
 # ╠═050f44c7-4b6c-4273-8573-bf17bb53bf74
 # ╟─b8bc2a92-161e-46c6-90f9-066cb0361c30
 # ╟─93f9186d-0667-43fc-bf8c-47ae0ffe9fc2
 # ╟─bac338be-83a7-4b93-b425-226cb9c2a4ce
-# ╟─670e2d8b-2941-4542-b370-06ed5158452c
-# ╠═5ca48307-f707-49db-bae0-627acb8f14f3
+# ╠═670e2d8b-2941-4542-b370-06ed5158452c
+# ╟─5517851e-92eb-4c80-aced-1eed968e09ba
+# ╟─f255d2a8-073d-4a53-8223-2c69fc1ac206
+# ╟─3cdab65d-7372-4f8a-be69-6fcb2b33fd86
+# ╟─b9093259-e6be-4bc1-bb81-ca6d1df19601
+# ╟─7b441b28-c632-4d6d-bad5-cdacfec0469a
+# ╟─5c8be02b-0bd9-4a5f-a9cf-235ec1bb1b31
+# ╟─7eea96d4-5657-4d13-9f8f-761a6fa06188
+# ╟─a76b6382-fc17-48ad-8959-827477717e60
+# ╟─27fd64d8-77c0-4aea-af2a-c1a91c9b7706
+# ╟─46ea3a9a-86c9-4609-a90e-9dd64ad8b954
+# ╠═9f6763ad-7587-4bcd-b4ef-15adb9610183
+# ╠═9d97f98b-4516-4243-9ed4-0820f8b8289c
+# ╟─6054d5d8-5ee4-495d-be71-585e152e7d36
+# ╟─6d0c828f-b22a-4737-9580-2c36c5448e9f
+# ╠═b81acf33-ab6a-4bac-ac2c-d533d11d24b6
+# ╠═340abe03-7cc4-4fb7-93e1-8d4e503b3ec8
+# ╟─1cadd8cf-c99e-49ac-8831-b26105858247
+# ╟─078dfb5e-8337-40ef-8b6c-dcae59a34f56
 # ╟─71976ffc-300e-4d21-b91e-2e0eebac6cfc
 # ╠═82923e10-b8ba-49e1-81ef-7856d393685c
-# ╠═3303e824-1b49-4865-83e2-274b59f9f5f1
+# ╟─3303e824-1b49-4865-83e2-274b59f9f5f1
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
