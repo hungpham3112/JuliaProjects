@@ -31,7 +31,8 @@ md"""
 """
 
 # ╔═╡ 964b94f2-a22e-4caa-94f3-5024db346eb3
-plotly()
+# ╠═╡ show_logs = false
+plotly();
 
 # ╔═╡ ada5ae54-acda-4c98-9c46-3194a7528961
 url = raw"https://raw.githubusercontent.com/hungpham3112/JuliaProjects/main/MachineLearning/LinearRegression/VN_housing_dataset.csv"
@@ -167,7 +168,7 @@ md"""
 @bind new_column Select([:area, :price])
 
 # ╔═╡ 6934bcde-c0c7-4a45-9297-f150714a29ca
-describe(df[:, column])
+describe(df[:, new_column])
 
 # ╔═╡ 2cd91ba4-fdbc-4cee-8d61-9eb720b45069
 boxplot(df[:, new_column],
@@ -271,7 +272,7 @@ $$\hat \beta_0 = \bar y - \hat \beta_1\bar x$$
 
 # ╔═╡ ca5fa588-2b95-4792-84f7-b7ec4bdade13
 md"""
-$$\hat \beta_1 = \dfrac{\sum_{i = 1}^ny_ix_i - \dfrac{(\sum_{i = 1}^ny_i)(\sum_{i = 1}^nx_i)}{n}}{\sum_{i = 1}^nx_i^2 - \dfrac{(\sum_{i = 1}^nx_i)^2}{n}}$$
+$$\hat \beta_1 = \dfrac{\sum_{i = 1}^ny_ix_i - \dfrac{(\sum_{i = 1}^ny_i)(\sum_{i = 1}^nx_i)}{n}}{\sum_{i = 1}^nx_i^2 - \dfrac{(\sum_{i = 1}^nx_i)^2}{n}} = \dfrac{S_{xy}}{S_{xx}}$$
 """
 
 # ╔═╡ 6bd4e4d9-8d70-478a-aabe-3d6627087dbe
@@ -286,13 +287,14 @@ $$\hat y = \hat \beta_0 + \hat \beta_1x$$
 """
 
 # ╔═╡ 62d1e434-1fce-4b3b-81cb-3652f8de0425
-ŷ(x) = β̂₀ .+ β̂₁ .* x
+ŷ(X) = β̂₀ .+ β̂₁ .* x
 
 # ╔═╡ e0c82598-9c71-426e-963f-fe87cf1ff641
 plot!(x, ŷ(x),
 	color = :red,
 	linewidth = 3,
-	label = "Pure Math"
+	label = "Pure Math",
+	legend = :left
 )
 
 # ╔═╡ 6e7679e0-d6f6-4ff1-92b5-0cd749463c4a
@@ -316,7 +318,9 @@ md"""
 """
 
 # ╔═╡ 93275900-7c6e-48dc-b6c1-457b9c1b13ce
-@bind desire NumberField(0:10_000, default=40)
+md"""
+Area: $(@bind desire NumberField(0:10_000, default=40))
+"""
 
 # ╔═╡ 006e6c60-886a-4bfc-943d-e87bf55e2682
 try
@@ -381,7 +385,8 @@ scatter(formatted_df2.area, formatted_df2.number_of_bedroom, formatted_df2.price
 	xlabel = "Area(square)",
 	ylabel = "Number of bedroom",
 	zlabel = "Price(in billion dong)",
-	legend = false
+	legend = false,
+	markersize = 2
 )
 
 # ╔═╡ ac56d2d7-a59c-4deb-a288-7a91189f4ca5
@@ -425,7 +430,8 @@ scatter3d(df2.area, df2.number_of_bedroom, df2.price,
 	xlabel = "Area(square)",
 	ylabel = "Number of bedroom",
 	zlabel = "Price(in billion dong)",
-	label = false
+	label = false,
+	markersize = 1
 )
 
 # ╔═╡ 5517851e-92eb-4c80-aced-1eed968e09ba
@@ -438,6 +444,12 @@ X₁ = df2.area
 
 # ╔═╡ 3cdab65d-7372-4f8a-be69-6fcb2b33fd86
 X₂ =  df2.number_of_bedroom
+
+# ╔═╡ a76b6382-fc17-48ad-8959-827477717e60
+X = [ones(size(df2.area)) df2.area df2.number_of_bedroom]
+
+# ╔═╡ 7eea96d4-5657-4d13-9f8f-761a6fa06188
+Y = df2.price
 
 # ╔═╡ b9093259-e6be-4bc1-bb81-ca6d1df19601
 md"""
@@ -454,12 +466,6 @@ md"""
 $$\boldsymbol{\hat \beta} = (\boldsymbol{X}^T\boldsymbol{X})⁻¹\boldsymbol{X}^T\textbf{y}$$
 """
 
-# ╔═╡ 7eea96d4-5657-4d13-9f8f-761a6fa06188
-Y = df2.price
-
-# ╔═╡ a76b6382-fc17-48ad-8959-827477717e60
-X = [ones(size(df2.area)) df2.area df2.number_of_bedroom]
-
 # ╔═╡ 27fd64d8-77c0-4aea-af2a-c1a91c9b7706
 β̂ = (X'X)^-1 * X' * Y
 
@@ -475,7 +481,8 @@ ŷ2(X) = X * β̂
 plot!(X₁, X₂, ŷ2(X),
 	color = :red,
 	linewidth = 3,
-	label = "Matrix approach"
+	label = "Matrix approach",
+	legend = :left
 )
 
 # ╔═╡ 6054d5d8-5ee4-495d-be71-585e152e7d36
@@ -493,11 +500,20 @@ plot!(X₁, X₂, predict(ols),
 	label = "GLM package"
 )
 
+# ╔═╡ 8e6a767f-9483-4340-9575-299cc08cbd90
+md"""
+### Make prediction from model
+"""
+
 # ╔═╡ 340abe03-7cc4-4fb7-93e1-8d4e503b3ec8
-@bind dientich NumberField(0:10_000, default = 40)
+md"""
+Area: $(@bind dientich NumberField(0:10_000, default = 40))
+"""
 
 # ╔═╡ 1cadd8cf-c99e-49ac-8831-b26105858247
-@bind so_phong NumberField(0:10, default = 4)
+md"""
+Number of rooms: $(@bind so_phong NumberField(0:10, default = 4))
+"""
 
 # ╔═╡ 078dfb5e-8337-40ef-8b6c-dcae59a34f56
 try
@@ -511,8 +527,16 @@ md"""
 ## Conclusion
 """
 
-# ╔═╡ 82923e10-b8ba-49e1-81ef-7856d393685c
-# In progress
+# ╔═╡ 80bdb18f-3991-4d3d-867c-84ea9a8f4b86
+md"""
+This Pluto notebook demonstrates a data analysis workflow for predicting housing prices using linear regression. The dataset used is the VN housing dataset, which is loaded from Kaggle
+
+The data preparation steps include renaming columns in the raw data, extracting a subset of data, and cleaning and normalizing the data. The sub-dataset used for the analysis is extracted from the raw dataset by filtering out missing and invalid values and selecting only the relevant columns. The extracted data is then cleaned and normalized by converting string data to numerical data and calculating a new column of price per unit area.
+
+The cleaned and normalized data is used to train a linear regression model using the GLM.jl package. The model is evaluated using various statistics and visualizations, including the R-squared value, coefficient values, and scatter plots. The model can be used to predict the price of new housing units based on their area.
+
+Overall, this notebook provides a comprehensive example of a data analysis workflow for linear regression modeling, which can be useful for predicting housing prices or other continuous variables based on available data.
+"""
 
 # ╔═╡ 3303e824-1b49-4865-83e2-274b59f9f5f1
 TableOfContents(title="Table of Contents", indent=true, depth=4, aside=true)
@@ -530,18 +554,6 @@ PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 StatsPlots = "f3b207a7-027a-5e70-b257-86293d7955fd"
 TypedTables = "9d95f2ec-7b3d-5a63-8d20-e2491e220bb9"
-
-[compat]
-CSV = "~0.10.9"
-DataFrames = "~1.5.0"
-DataFramesMeta = "~0.13.0"
-GLM = "~1.8.2"
-HTTP = "~1.7.4"
-Plots = "~1.38.8"
-PlutoUI = "~0.7.50"
-StatsBase = "~0.33.21"
-StatsPlots = "~0.15.4"
-TypedTables = "~1.4.1"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -550,7 +562,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.9.0-rc1"
 manifest_format = "2.0"
-project_hash = "c85d255c0c59c34042d410f2fbd77e129850a4e7"
+project_hash = "207ae942f937b4a7e1bc4856f22c2a7cbbe75d8c"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -1935,8 +1947,8 @@ version = "1.4.1+0"
 # ╟─c01f2140-03aa-4f4f-9527-308263ebabb1
 # ╠═449e934d-91c6-4569-bf81-5168a61d46ff
 # ╟─bd7f95cf-994e-4e03-93a8-0add0826f4c5
-# ╠═964b94f2-a22e-4caa-94f3-5024db346eb3
-# ╠═ada5ae54-acda-4c98-9c46-3194a7528961
+# ╟─964b94f2-a22e-4caa-94f3-5024db346eb3
+# ╟─ada5ae54-acda-4c98-9c46-3194a7528961
 # ╠═7b07a558-f478-4124-85cc-7896415229bd
 # ╠═3fefbdc5-d0fa-4b19-82f3-e41a36560fa8
 # ╟─952673f4-6171-4a2d-87c9-4bd8311f4afb
@@ -1990,20 +2002,20 @@ version = "1.4.1+0"
 # ╠═6bd4e4d9-8d70-478a-aabe-3d6627087dbe
 # ╟─e4d393fa-ea78-4a79-b180-7bff540c2e5e
 # ╠═62d1e434-1fce-4b3b-81cb-3652f8de0425
-# ╠═e0c82598-9c71-426e-963f-fe87cf1ff641
+# ╟─e0c82598-9c71-426e-963f-fe87cf1ff641
 # ╟─6e7679e0-d6f6-4ff1-92b5-0cd749463c4a
 # ╠═a19b6a65-5675-40cd-9b8c-d7ed5b10eae8
 # ╠═b29bc539-d77b-402a-9972-68f8a4878749
-# ╠═6df98270-bf91-4483-b247-81aafdaa44f1
+# ╟─6df98270-bf91-4483-b247-81aafdaa44f1
 # ╟─5a245c40-984f-475b-a5ac-6a066c2b741e
-# ╠═93275900-7c6e-48dc-b6c1-457b9c1b13ce
+# ╟─93275900-7c6e-48dc-b6c1-457b9c1b13ce
 # ╟─006e6c60-886a-4bfc-943d-e87bf55e2682
 # ╟─2c268a1d-f091-415b-8659-9efd4e1627b1
 # ╠═5e2523fb-f24c-49af-8d16-11a2d5f39c45
 # ╠═daa274dc-1ada-4dc0-9100-e6cc6454a29e
 # ╠═9dc61bf4-03fa-4c28-9cec-b4ee837ad3ff
 # ╠═0dc21ec6-6cec-4214-865a-9354be40b39c
-# ╠═827be081-4105-4f83-84ec-da489318413a
+# ╟─827be081-4105-4f83-84ec-da489318413a
 # ╠═38791285-7e26-4195-a31a-eff8fdc1b4ec
 # ╠═ac56d2d7-a59c-4deb-a288-7a91189f4ca5
 # ╠═01f9fa2d-b44b-4fdb-aa4f-2f167011f849
@@ -2012,27 +2024,28 @@ version = "1.4.1+0"
 # ╟─b8bc2a92-161e-46c6-90f9-066cb0361c30
 # ╟─93f9186d-0667-43fc-bf8c-47ae0ffe9fc2
 # ╟─bac338be-83a7-4b93-b425-226cb9c2a4ce
-# ╠═670e2d8b-2941-4542-b370-06ed5158452c
+# ╟─670e2d8b-2941-4542-b370-06ed5158452c
 # ╟─5517851e-92eb-4c80-aced-1eed968e09ba
 # ╟─f255d2a8-073d-4a53-8223-2c69fc1ac206
 # ╟─3cdab65d-7372-4f8a-be69-6fcb2b33fd86
+# ╟─a76b6382-fc17-48ad-8959-827477717e60
+# ╟─7eea96d4-5657-4d13-9f8f-761a6fa06188
 # ╟─b9093259-e6be-4bc1-bb81-ca6d1df19601
 # ╟─7b441b28-c632-4d6d-bad5-cdacfec0469a
 # ╟─5c8be02b-0bd9-4a5f-a9cf-235ec1bb1b31
-# ╟─7eea96d4-5657-4d13-9f8f-761a6fa06188
-# ╟─a76b6382-fc17-48ad-8959-827477717e60
 # ╟─27fd64d8-77c0-4aea-af2a-c1a91c9b7706
 # ╟─46ea3a9a-86c9-4609-a90e-9dd64ad8b954
 # ╠═9f6763ad-7587-4bcd-b4ef-15adb9610183
-# ╠═9d97f98b-4516-4243-9ed4-0820f8b8289c
+# ╟─9d97f98b-4516-4243-9ed4-0820f8b8289c
 # ╟─6054d5d8-5ee4-495d-be71-585e152e7d36
 # ╟─6d0c828f-b22a-4737-9580-2c36c5448e9f
 # ╠═b81acf33-ab6a-4bac-ac2c-d533d11d24b6
-# ╠═340abe03-7cc4-4fb7-93e1-8d4e503b3ec8
+# ╟─8e6a767f-9483-4340-9575-299cc08cbd90
+# ╟─340abe03-7cc4-4fb7-93e1-8d4e503b3ec8
 # ╟─1cadd8cf-c99e-49ac-8831-b26105858247
 # ╟─078dfb5e-8337-40ef-8b6c-dcae59a34f56
 # ╟─71976ffc-300e-4d21-b91e-2e0eebac6cfc
-# ╠═82923e10-b8ba-49e1-81ef-7856d393685c
+# ╟─80bdb18f-3991-4d3d-867c-84ea9a8f4b86
 # ╟─3303e824-1b49-4865-83e2-274b59f9f5f1
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
