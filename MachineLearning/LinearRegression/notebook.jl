@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.22
+# v0.19.26
 
 using Markdown
 using InteractiveUtils
@@ -32,7 +32,7 @@ md"""
 
 # ╔═╡ 964b94f2-a22e-4caa-94f3-5024db346eb3
 # ╠═╡ show_logs = false
-plotly();
+gr();
 
 # ╔═╡ ada5ae54-acda-4c98-9c46-3194a7528961
 url = raw"https://raw.githubusercontent.com/hungpham3112/JuliaProjects/main/MachineLearning/LinearRegression/VN_housing_dataset.csv"
@@ -560,7 +560,7 @@ TypedTables = "9d95f2ec-7b3d-5a63-8d20-e2491e220bb9"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.9.0-rc1"
+julia_version = "1.9.0"
 manifest_format = "2.0"
 project_hash = "207ae942f937b4a7e1bc4856f22c2a7cbbe75d8c"
 
@@ -1894,7 +1894,7 @@ version = "0.15.1+0"
 [[deps.libblastrampoline_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
-version = "5.4.0+0"
+version = "5.7.0+0"
 
 [[deps.libfdk_aac_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1947,7 +1947,7 @@ version = "1.4.1+0"
 # ╟─c01f2140-03aa-4f4f-9527-308263ebabb1
 # ╠═449e934d-91c6-4569-bf81-5168a61d46ff
 # ╟─bd7f95cf-994e-4e03-93a8-0add0826f4c5
-# ╟─964b94f2-a22e-4caa-94f3-5024db346eb3
+# ╠═964b94f2-a22e-4caa-94f3-5024db346eb3
 # ╟─ada5ae54-acda-4c98-9c46-3194a7528961
 # ╠═7b07a558-f478-4124-85cc-7896415229bd
 # ╠═3fefbdc5-d0fa-4b19-82f3-e41a36560fa8
