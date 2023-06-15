@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.22
+# v0.19.26
 
 using Markdown
 using InteractiveUtils
@@ -35,7 +35,7 @@ md"""
 
 # ╔═╡ 964b94f2-a22e-4caa-94f3-5024db346eb3
 # ╠═╡ show_logs = false
-plotly();
+gr();
 
 # ╔═╡ ada5ae54-acda-4c98-9c46-3194a7528961
 url = raw"https://raw.githubusercontent.com/hungpham3112/JuliaProjects/main/MachineLearning/LinearRegression/VN_housing_dataset.csv"
@@ -2461,7 +2461,7 @@ version = "1.4.1+0"
 # ╠═449e934d-91c6-4569-bf81-5168a61d46ff
 # ╠═08848b1a-119c-4c10-9109-29146450f2c0
 # ╟─bd7f95cf-994e-4e03-93a8-0add0826f4c5
-# ╟─964b94f2-a22e-4caa-94f3-5024db346eb3
+# ╠═964b94f2-a22e-4caa-94f3-5024db346eb3
 # ╟─ada5ae54-acda-4c98-9c46-3194a7528961
 # ╠═7b07a558-f478-4124-85cc-7896415229bd
 # ╠═3fefbdc5-d0fa-4b19-82f3-e41a36560fa8
