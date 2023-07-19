@@ -220,19 +220,16 @@ end
 # ╔═╡ ed24bfb9-905b-4103-ba5d-72ba7a56aa71
 train_data, test_data = splitdf(df, 0.7)
 
+# ╔═╡ 202b7da4-fbe6-402d-b65c-793bdfbe917b
+x_train, y_train, x_test, y_test = train_data[!, 1], train_data[!, 2], test_data[!, 1], test_data[!, 2]
+
 # ╔═╡ 067be4c0-4572-4731-8dc8-d828ad5bb9e9
 md"""
 ## Single Linear Regression
 """
 
-# ╔═╡ 9be3b4c4-8906-48fe-9ecb-d1088298bed3
-x = train_data.area
-
-# ╔═╡ 87fba0c9-6b37-42e7-b921-a0806fb717dd
-y = train_data.price
-
 # ╔═╡ 5f8c3ea0-9652-4af8-b29b-bec4a601b9ad
-n = length(x)
+n = length(x_train)
 
 # ╔═╡ 79d709ac-50db-4864-b4ee-b93b9d0746ad
 md"""
@@ -261,7 +258,7 @@ $$\sum_{i = 1}^nx_i^2$$
 """
 
 # ╔═╡ 588b390a-f62f-47ce-8521-fafb6a41a125
-sum_x² = sum(x.^2)
+sum_x² = sum(x_train.^2)
 
 # ╔═╡ 140790ac-dd7d-4601-a0ac-6e9405644dbc
 md"""
@@ -269,7 +266,7 @@ $$\sum_{i = 1}^ny_i^2$$
 """
 
 # ╔═╡ 464d81f6-b655-44d3-8148-08cab6dcad0e
-sum_y² = sum(y.^2)
+sum_y² = sum(y_train.^2)
 
 # ╔═╡ a279ddb8-3769-45dd-848d-8ea1d45fd299
 md"""
@@ -277,7 +274,7 @@ $$\sum_{i = 1}^nx_iy_i$$
 """
 
 # ╔═╡ 4d904862-3a45-4ee0-a8a9-fd0ef65f12c0
-sum_xy = sum(x .* y)
+sum_xy = sum(x_train .* y_train)
 
 # ╔═╡ 978299df-5721-44a0-a976-434e648ead58
 md"""
@@ -321,14 +318,14 @@ ŷ(x) = β̂₀ .+ β̂₁ * x
 
 # ╔═╡ e0c82598-9c71-426e-963f-fe87cf1ff641
 begin
-	scatter(x, y, 
+	scatter(x_train, y_train, 
 		title = "Housing price in Hoang Mai district (2019 - 2020)",
 		xlabel = "Area(square)",
 		ylabel = "Price(in billion dong)",
 		color = :cyan,
 		label = false
 	)
-	plot!(x, ŷ(x),
+	plot!(x_train, ŷ(x_train),
 		color = :red,
 		linewidth = 3,
 		label = "Pure Math",
@@ -345,31 +342,11 @@ md"""
 ordinary_least_square = lm(@formula(price ~ area), train_data)
 
 # ╔═╡ 6df98270-bf91-4483-b247-81aafdaa44f1
-plot!(x, predict(ordinary_least_square),
+plot!(x_train, predict(ordinary_least_square),
 	color = :yellow,
 	linewidth = 3,
 	label = "GLM package"
 )
-
-# ╔═╡ 400b406c-36c7-46b0-8a46-3ad7da26fd00
-md"""
-## Computing Cost
-
-$$J(β₁, β₀) = \frac{1}{2n} \sum\limits_{i = 1}^{n} (f_{β₀, β₁}(x_i) - y_i)^2$$ 
- 
-where 
-  $$f_{β₀, β₁}(x_i) = \hat{y} = β₁xᵢ + β₀$$
-  
-- $f_{β₀, β₁}(x_i)$ is our prediction for example $i$ using parameters $w,b$.  
-- $(f_{β₀, β₁}(x_i) -y_i)^2$ is the squared difference between the target value and the prediction.   
-- These differences are summed over all the $m$ examples and divided by `2m` to produce the cost, $J(w,b)$.  
-"""
-
-# ╔═╡ 0b58b40e-5252-4063-a592-c0b52d648555
-J(x, y, β̂₁, β̂₀) = sum((β̂₁ * x .+ β̂₀ .- y).^2) / 2n
-
-# ╔═╡ 9fd3c422-d3af-487b-9f8f-d699f35bf29c
-plot(J(x, y, β̂₁, β̂₀), x, y)
 
 # ╔═╡ 5a245c40-984f-475b-a5ac-6a066c2b741e
 md"""
@@ -575,6 +552,26 @@ function compute_cost(x, y, w, b)
 
     return total_cost
 end
+
+# ╔═╡ 400b406c-36c7-46b0-8a46-3ad7da26fd00
+md"""
+## Computing Cost
+
+$$J(β₁, β₀) = \frac{1}{2m} \sum\limits_{i = 1}^{n} (f_{β₀, β₁}(x_i) - y_i)^2$$ 
+ 
+where 
+  $$f_{β₀, β₁}(x_i) = \hat{y} = β₁xᵢ + β₀$$
+  
+- $f_{β₀, β₁}(x_i)$ is our prediction for example $i$ using parameters $w,b$.  
+- $(f_{β₀, β₁}(x_i) -y_i)^2$ is the squared difference between the target value and the prediction.   
+- These differences are summed over all the $m$ examples and divided by `2m` to produce the cost, $J(w,b)$.  
+"""
+
+# ╔═╡ 0b58b40e-5252-4063-a592-c0b52d648555
+J(x, y, β̂₁, β̂₀) = sum((β̂₁ * x .+ β̂₀ .- y).^2) / 2 * length(x)
+
+# ╔═╡ 4056a594-c815-441a-9b2d-087930504eff
+J(x_test, y_test, β̂₁, β̂₀)
 
 # ╔═╡ 8e6a767f-9483-4340-9575-299cc08cbd90
 md"""
@@ -2496,9 +2493,8 @@ version = "1.4.1+0"
 # ╟─ef03aeb0-810f-4510-9901-8e114c968477
 # ╠═56fa43a0-e90b-4604-bcb5-be2c79813f87
 # ╠═ed24bfb9-905b-4103-ba5d-72ba7a56aa71
+# ╠═202b7da4-fbe6-402d-b65c-793bdfbe917b
 # ╟─067be4c0-4572-4731-8dc8-d828ad5bb9e9
-# ╠═9be3b4c4-8906-48fe-9ecb-d1088298bed3
-# ╠═87fba0c9-6b37-42e7-b921-a0806fb717dd
 # ╠═5f8c3ea0-9652-4af8-b29b-bec4a601b9ad
 # ╟─79d709ac-50db-4864-b4ee-b93b9d0746ad
 # ╟─0c12745d-bfb5-4934-8556-a71904292cdb
@@ -2526,9 +2522,6 @@ version = "1.4.1+0"
 # ╠═a19b6a65-5675-40cd-9b8c-d7ed5b10eae8
 # ╠═b29bc539-d77b-402a-9972-68f8a4878749
 # ╟─6df98270-bf91-4483-b247-81aafdaa44f1
-# ╟─400b406c-36c7-46b0-8a46-3ad7da26fd00
-# ╠═0b58b40e-5252-4063-a592-c0b52d648555
-# ╠═9fd3c422-d3af-487b-9f8f-d699f35bf29c
 # ╟─5a245c40-984f-475b-a5ac-6a066c2b741e
 # ╟─93275900-7c6e-48dc-b6c1-457b9c1b13ce
 # ╟─006e6c60-886a-4bfc-943d-e87bf55e2682
@@ -2563,6 +2556,9 @@ version = "1.4.1+0"
 # ╟─6d0c828f-b22a-4737-9580-2c36c5448e9f
 # ╟─b81acf33-ab6a-4bac-ac2c-d533d11d24b6
 # ╟─7420e0ec-33f2-48d4-998d-5e44c515ddac
+# ╟─400b406c-36c7-46b0-8a46-3ad7da26fd00
+# ╠═0b58b40e-5252-4063-a592-c0b52d648555
+# ╠═4056a594-c815-441a-9b2d-087930504eff
 # ╟─8e6a767f-9483-4340-9575-299cc08cbd90
 # ╟─340abe03-7cc4-4fb7-93e1-8d4e503b3ec8
 # ╟─1cadd8cf-c99e-49ac-8831-b26105858247

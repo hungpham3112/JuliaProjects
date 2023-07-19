@@ -64,9 +64,7 @@ md"""
 replaced_df = @. ifelse(df_raw == "?", missing, df_raw)
 
 # ╔═╡ f3dd0b16-4e5e-4ed2-85d3-7e2d5d2e9b3a
-#=╠═╡
 describe(replaced_df)
-  ╠═╡ =#
 
 # ╔═╡ 0bbde823-d112-45d8-8277-d8889d527e38
 md"""
@@ -96,9 +94,7 @@ for col in lst1
 end
 
 # ╔═╡ a14dde99-c639-45f4-ad2a-98149a9ef5ef
-#=╠═╡
 describe(replaced_df1)
-  ╠═╡ =#
 
 # ╔═╡ b16a45a3-9548-4cf3-b5fd-872fd7d3a875
 md"""
