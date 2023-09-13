@@ -1,0 +1,3 @@
+[submodule "ReinforcementLearningAnIntroduction.jl"]
+	path = ReinforcementLearningAnIntroduction.jl
+	url = https://github.com/JuliaReinforcementLearning/ReinforcementLearningAnIntroduction.jl.git
