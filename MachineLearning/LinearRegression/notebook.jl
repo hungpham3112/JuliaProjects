@@ -25,7 +25,7 @@ using GLM, TypedTables
 
 # ╔═╡ c01f2140-03aa-4f4f-9527-308263ebabb1
 md"""
-# Predict the housing price with Linear Regression
+# Statistical Learning: Linear Regression
 """
 
 # ╔═╡ bd7f95cf-994e-4e03-93a8-0add0826f4c5
@@ -38,7 +38,7 @@ md"""
 gr();
 
 # ╔═╡ ada5ae54-acda-4c98-9c46-3194a7528961
-url = raw"https://raw.githubusercontent.com/hungpham3112/JuliaProjects/main/MachineLearning/LinearRegression/VN_housing_dataset.csv"
+url = raw"https://raw.githubusercontent.com/hungpham3112/JuliaProjects/main/MachineLearning/LinearRegression/data/VN_housing_dataset.csv"
 
 # ╔═╡ 7b07a558-f478-4124-85cc-7896415229bd
 raw_df = CSV.read(HTTP.get(url).body, DataFrame)
@@ -648,7 +648,7 @@ TypedTables = "~1.4.1"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.9.0"
+julia_version = "1.9.3"
 manifest_format = "2.0"
 project_hash = "426476ad598e32fd11cf52b70a66b93e9929af63"
 
@@ -832,7 +832,7 @@ weakdeps = ["Dates", "LinearAlgebra"]
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
-version = "1.0.2+0"
+version = "1.0.5+0"
 
 [[deps.ConcurrentUtilities]]
 deps = ["Serialization", "Sockets"]
@@ -1712,7 +1712,7 @@ version = "0.40.1+0"
 [[deps.Pkg]]
 deps = ["Artifacts", "Dates", "Downloads", "FileWatching", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "Serialization", "TOML", "Tar", "UUIDs", "p7zip_jll"]
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
-version = "1.9.0"
+version = "1.9.2"
 
 [[deps.PkgVersion]]
 deps = ["Pkg"]
@@ -2398,7 +2398,7 @@ version = "0.15.1+0"
 [[deps.libblastrampoline_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
-version = "5.7.0+0"
+version = "5.8.0+0"
 
 [[deps.libfdk_aac_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -2458,8 +2458,8 @@ version = "1.4.1+0"
 # ╠═449e934d-91c6-4569-bf81-5168a61d46ff
 # ╠═08848b1a-119c-4c10-9109-29146450f2c0
 # ╟─bd7f95cf-994e-4e03-93a8-0add0826f4c5
-# ╠═964b94f2-a22e-4caa-94f3-5024db346eb3
-# ╟─ada5ae54-acda-4c98-9c46-3194a7528961
+# ╟─964b94f2-a22e-4caa-94f3-5024db346eb3
+# ╠═ada5ae54-acda-4c98-9c46-3194a7528961
 # ╠═7b07a558-f478-4124-85cc-7896415229bd
 # ╠═3fefbdc5-d0fa-4b19-82f3-e41a36560fa8
 # ╟─952673f4-6171-4a2d-87c9-4bd8311f4afb
@@ -2475,10 +2475,10 @@ version = "1.4.1+0"
 # ╠═cd19344e-3a89-4f67-8164-a692af1fac45
 # ╟─59cbf361-7617-4742-a7de-fbeadcbc7cd1
 # ╟─80d04ce4-b04f-40b6-ae46-83220e8ad254
-# ╟─0a35c919-e9e7-43f1-996d-58c6659e02c8
+# ╠═0a35c919-e9e7-43f1-996d-58c6659e02c8
 # ╟─162375e9-09b4-4728-9e5f-0c8b67650cc0
 # ╟─8b3d6c2e-fb98-4ef6-ac9e-7ead6a2227f0
-# ╟─027fb282-5928-42a7-8e89-e8825f9e39e0
+# ╠═027fb282-5928-42a7-8e89-e8825f9e39e0
 # ╟─4a0c56fa-cd57-47b5-aa47-39bde0e251e7
 # ╟─ec4e18b3-7d3e-44bf-9935-5501a3798010
 # ╠═6efc8bfd-db82-43e1-a447-4446b0e70d3e
@@ -2551,7 +2551,7 @@ version = "1.4.1+0"
 # ╟─27fd64d8-77c0-4aea-af2a-c1a91c9b7706
 # ╟─46ea3a9a-86c9-4609-a90e-9dd64ad8b954
 # ╠═9f6763ad-7587-4bcd-b4ef-15adb9610183
-# ╟─9d97f98b-4516-4243-9ed4-0820f8b8289c
+# ╠═9d97f98b-4516-4243-9ed4-0820f8b8289c
 # ╟─6054d5d8-5ee4-495d-be71-585e152e7d36
 # ╟─6d0c828f-b22a-4737-9580-2c36c5448e9f
 # ╟─b81acf33-ab6a-4bac-ac2c-d533d11d24b6

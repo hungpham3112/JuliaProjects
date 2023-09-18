@@ -195,7 +195,7 @@ MLJ = "~0.19.1"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.9.2"
+julia_version = "1.9.3"
 manifest_format = "2.0"
 project_hash = "cd317a7c41a90a1e5bfcbe35026beed2a1ca9446"
 
@@ -1562,5 +1562,6 @@ version = "17.4.0+0"
 # ╠═b54d7021-74ae-48b9-a12b-a9984ca4310a
 # ╠═3eb82e8b-3e96-41fc-843f-cecadae0e9da
 # ╠═046aefd0-0d25-4389-8ea0-fc942b4f5a82
+# ╠═e01e62ea-5ee7-41ed-a51e-1cfc71356c02
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
