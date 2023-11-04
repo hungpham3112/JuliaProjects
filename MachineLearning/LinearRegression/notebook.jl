@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.27
+# v0.19.29
 
 using Markdown
 using InteractiveUtils
@@ -35,7 +35,7 @@ md"""
 
 # ╔═╡ 964b94f2-a22e-4caa-94f3-5024db346eb3
 # ╠═╡ show_logs = false
-gr();
+plotly();
 
 # ╔═╡ ada5ae54-acda-4c98-9c46-3194a7528961
 url = raw"https://raw.githubusercontent.com/hungpham3112/JuliaProjects/main/MachineLearning/LinearRegression/data/VN_housing_dataset.csv"
@@ -520,7 +520,7 @@ plot!(X₁, X₂, ŷ2(X),
 	color = :red,
 	linewidth = 3,
 	label = "Matrix approach",
-	legend = :left
+	legend = :topright
 )
 
 # ╔═╡ 6054d5d8-5ee4-495d-be71-585e152e7d36
@@ -951,6 +951,12 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "e3290f2d49e661fbd94046d7e3726ffcb2d41053"
 uuid = "5ae413db-bbd1-5e63-b57d-d24a61df00f5"
 version = "2.2.4+0"
+
+[[deps.EpollShim_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl"]
+git-tree-sha1 = "8e9441ee83492030ace98f9789a654a6d0b1f643"
+uuid = "2702e6a9-849d-5ed8-8c21-79e8b8f9ee43"
+version = "0.0.20230411+0"
 
 [[deps.Expat_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -2188,7 +2194,7 @@ uuid = "41fe7b60-77ed-43a1-b4f0-825fd5a5650d"
 version = "0.2.0"
 
 [[deps.Wayland_jll]]
-deps = ["Artifacts", "Expat_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Pkg", "XML2_jll"]
+deps = ["Artifacts", "EpollShim_jll", "Expat_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Pkg", "XML2_jll"]
 git-tree-sha1 = "ed8d92d9774b077c53e1da50fd81a36af3744c1c"
 uuid = "a2964d1f-97da-50d4-b82a-358c7fce9d89"
 version = "1.21.0+0"
@@ -2458,7 +2464,7 @@ version = "1.4.1+0"
 # ╠═449e934d-91c6-4569-bf81-5168a61d46ff
 # ╠═08848b1a-119c-4c10-9109-29146450f2c0
 # ╟─bd7f95cf-994e-4e03-93a8-0add0826f4c5
-# ╟─964b94f2-a22e-4caa-94f3-5024db346eb3
+# ╠═964b94f2-a22e-4caa-94f3-5024db346eb3
 # ╠═ada5ae54-acda-4c98-9c46-3194a7528961
 # ╠═7b07a558-f478-4124-85cc-7896415229bd
 # ╠═3fefbdc5-d0fa-4b19-82f3-e41a36560fa8
@@ -2554,7 +2560,7 @@ version = "1.4.1+0"
 # ╠═9d97f98b-4516-4243-9ed4-0820f8b8289c
 # ╟─6054d5d8-5ee4-495d-be71-585e152e7d36
 # ╟─6d0c828f-b22a-4737-9580-2c36c5448e9f
-# ╟─b81acf33-ab6a-4bac-ac2c-d533d11d24b6
+# ╠═b81acf33-ab6a-4bac-ac2c-d533d11d24b6
 # ╟─7420e0ec-33f2-48d4-998d-5e44c515ddac
 # ╟─400b406c-36c7-46b0-8a46-3ad7da26fd00
 # ╠═0b58b40e-5252-4063-a592-c0b52d648555
