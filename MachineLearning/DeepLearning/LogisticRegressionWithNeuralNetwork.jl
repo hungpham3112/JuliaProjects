@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.27
+# v0.19.30
 
 using Markdown
 using InteractiveUtils
@@ -104,8 +104,8 @@ md"""
 
 # ╔═╡ 124338c5-ffd2-4b8f-8183-cc274d35182a
 begin
-	normalized_XTrain = zscore(XTrain_new)
-	normalized_XTest = zscore(XTest_new)
+	normalized_XTrain = zscore(XTrain_new);
+	normalized_XTest = zscore(XTest_new);
 end
 
 # ╔═╡ a563cdce-f7e2-48be-9be8-64ca0e2373db
@@ -300,7 +300,7 @@ begin
 		label="α=0.01",
 		title="Linear regression with neural network",
 		xlabel="Epoch",
-		ylabel="Value",
+		ylabel="Cost",
 	)
 	plot!(logistic_regression_model2[1],
 		label="α=0.001"
@@ -317,6 +317,18 @@ md"""
 
 # ╔═╡ 35b6b2a8-1154-4464-aaff-172522feacf9
 @bind image_data FilePicker([MIME("image/*")])
+
+# ╔═╡ fd3847d1-1609-4dfd-a19a-dc41d578077d
+begin
+	path = tempname() * image_data["name"]
+	write(path, image_data["data"])
+end
+
+# ╔═╡ 235be411-ea7a-4dfd-a27a-2782797cc464
+LocalResource(path)
+
+# ╔═╡ 7b73cf5f-75bc-4d15-a1cc-26a47b5675c6
+image_data["data"]
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -344,7 +356,7 @@ StatsPlots = "~0.15.6"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.9.3"
+julia_version = "1.9.4"
 manifest_format = "2.0"
 project_hash = "d26a6e55237f359996f7e35379f36a2f4a35e3ce"
 
@@ -677,6 +689,12 @@ deps = ["Calculus", "NaNMath", "SpecialFunctions"]
 git-tree-sha1 = "5837a837389fccf076445fce071c8ddaea35a566"
 uuid = "fa6b7ba4-c1ee-5f82-b5fc-ecf0adba8f74"
 version = "0.6.8"
+
+[[deps.EpollShim_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl"]
+git-tree-sha1 = "8e9441ee83492030ace98f9789a654a6d0b1f643"
+uuid = "2702e6a9-849d-5ed8-8c21-79e8b8f9ee43"
+version = "0.0.20230411+0"
 
 [[deps.ExceptionUnwrapping]]
 deps = ["Test"]
@@ -1186,12 +1204,12 @@ version = "0.3.1"
 [[deps.LibCURL]]
 deps = ["LibCURL_jll", "MozillaCACerts_jll"]
 uuid = "b27032c2-a3e7-50c8-80cd-2d36dbcbfd21"
-version = "0.6.3"
+version = "0.6.4"
 
 [[deps.LibCURL_jll]]
 deps = ["Artifacts", "LibSSH2_jll", "Libdl", "MbedTLS_jll", "Zlib_jll", "nghttp2_jll"]
 uuid = "deac9b47-8bc7-5906-a0fe-35ac56dc84c0"
-version = "7.84.0+0"
+version = "8.4.0+0"
 
 [[deps.LibGit2]]
 deps = ["Base64", "NetworkOptions", "Printf", "SHA"]
@@ -1200,7 +1218,7 @@ uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
 [[deps.LibSSH2_jll]]
 deps = ["Artifacts", "Libdl", "MbedTLS_jll"]
 uuid = "29816b5a-b9ab-546f-933c-edad1886dfa8"
-version = "1.10.2+0"
+version = "1.11.0+1"
 
 [[deps.Libdl]]
 uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
@@ -2037,7 +2055,7 @@ uuid = "3d5dd08c-fd9d-11e8-17fa-ed2836048c2f"
 version = "0.21.64"
 
 [[deps.Wayland_jll]]
-deps = ["Artifacts", "Expat_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Pkg", "XML2_jll"]
+deps = ["Artifacts", "EpollShim_jll", "Expat_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Pkg", "XML2_jll"]
 git-tree-sha1 = "ed8d92d9774b077c53e1da50fd81a36af3744c1c"
 uuid = "a2964d1f-97da-50d4-b82a-358c7fce9d89"
 version = "1.21.0+0"
@@ -2313,7 +2331,7 @@ version = "1.3.7+1"
 [[deps.nghttp2_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "8e850ede-7688-5339-a07c-302acd2aaf8d"
-version = "1.48.0+0"
+version = "1.52.0+1"
 
 [[deps.p7zip_jll]]
 deps = ["Artifacts", "Libdl"]
@@ -2355,7 +2373,7 @@ version = "1.4.1+0"
 # ╟─a75b7e1e-d61b-4a2c-a2be-996806bdedfe
 # ╠═47138256-6865-465d-9f32-bfe01da2ecff
 # ╟─9b002706-adc2-403c-90b0-7a67f7ff5c65
-# ╟─71d37075-5dc1-44f8-be71-bde5aac0b7d0
+# ╠═71d37075-5dc1-44f8-be71-bde5aac0b7d0
 # ╟─a04de1df-c893-494f-8517-b32ba9c139de
 # ╠═124338c5-ffd2-4b8f-8183-cc274d35182a
 # ╟─a563cdce-f7e2-48be-9be8-64ca0e2373db
@@ -2387,5 +2405,8 @@ version = "1.4.1+0"
 # ╠═9386aca9-90fb-425f-b48a-fe5e7abddadd
 # ╟─4430ab15-264c-413e-b561-845666cea813
 # ╠═35b6b2a8-1154-4464-aaff-172522feacf9
+# ╠═fd3847d1-1609-4dfd-a19a-dc41d578077d
+# ╠═235be411-ea7a-4dfd-a27a-2782797cc464
+# ╠═7b73cf5f-75bc-4d15-a1cc-26a47b5675c6
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
