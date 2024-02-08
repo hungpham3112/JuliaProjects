@@ -3,8 +3,6 @@ PROJECT_PATH = dirname(dirname(@__FILE__))
 MY_CONFIG_DIR = PROJECT_PATH * "/.config"
 JULIA_CONFIG_DIR = "$(DEPOT_PATH[1])/config"
 
-
-
 function version()::String
     version = string(VERSION)
     stripped_version_str = strip(version, 'v')
@@ -15,67 +13,44 @@ function version()::String
 end
 
 RAW_VERSION = version()
-JULIA_ENV_DIR_VERSION = "$(DEPOT_PATH[1])/environments/$RAW_VERSION/"
-JULIA_ENV_DIR = "$(DEPOT_PATH[1])/environments/"
-
+JULIA_ENV_DIR = "$(DEPOT_PATH[1])/environments"
+JULIA_ENV_DIR_VERSION = "$(JULIA_ENV_DIR)/$RAW_VERSION"
 
 function symlink_global_manifest()
     src = "$MY_CONFIG_DIR/GlobalManifest.toml"
-    dst = "$JULIA_ENV_DIR/Manifest.toml"
-    if !isdir(JULIA_ENV_DIR)
-        mkdir(JULIA_ENV_DIR)
-        if !isdir(JULIA_ENV_DIR_VERSION)
-            mkdir(JULIA_ENV_DIR_VERSION)
-        end
-    end
+    dst = "$JULIA_ENV_DIR_VERSION/Manifest.toml"
 
+    isdir(JULIA_ENV_DIR) || mkdir(JULIA_ENV_DIR)
+    isdir(JULIA_ENV_DIR_VERSION) || mkdir(JULIA_ENV_DIR_VERSION)
 
-    if isfile(dst)
-        rm(dst)
-        symlink(src, dst)
-        println("Create global symlink for Manifest.toml successfully")
-    else
-        symlink(src, dst)
-        println("Create global symlink for Manifest.toml successfully")
-    end
+    isfile(dst) && rm(dst)
+    symlink(src, dst)
+    println("Create global symlink for Manifest.toml successfully")
 end
 
 function symlink_global_project()
     src = "$MY_CONFIG_DIR/GlobalProject.toml"
-    dst = "$JULIA_ENV_DIR/Project.toml"
+    dst = "$JULIA_ENV_DIR_VERSION/Project.toml"
 
-    if !isdir(JULIA_ENV_DIR)
-        mkdir(JULIA_ENV_DIR)
-        if !isdir(JULIA_ENV_DIR_VERSION)
-            mkdir(JULIA_ENV_DIR_VERSION)
-        end
-    end
+    isdir(JULIA_ENV_DIR) || mkdir(JULIA_ENV_DIR)
+    isdir(JULIA_ENV_DIR_VERSION) || mkdir(JULIA_ENV_DIR_VERSION)
 
-    if isfile(dst)
-        rm(dst)
-        symlink(src, dst)
-        println("Create global symlink for Project.toml successfully")
-    else
-        symlink(src, dst)
-        println("Create global symlink for Project.toml successfully")
-    end
+    isfile(dst) && rm(dst)
+
+    symlink(src, dst)
+    println("Create global symlink for Project.toml successfully")
 end
 
 function symlink_startup()
     src = "$MY_CONFIG_DIR/startup.jl"
     dst = "$JULIA_CONFIG_DIR/startup.jl"
-    if !isdir(JULIA_CONFIG_DIR)
-        mkdir(JULIA_CONFIG_DIR)
-    end
 
-    if isfile(dst)
-        rm(dst)
-        symlink(src, dst)
-        println("Create startup.jl symlink successfully")
-    else
-        symlink(src, dst)
-        println("Create startup.jl symlink successfully")
-    end
+    isdir(JULIA_CONFIG_DIR) || mkdir(JULIA_CONFIG_DIR)
+
+    isfile(dst) && rm(dst)
+
+    symlink(src, dst)
+    println("Create startup.jl symlink successfully")
 end
 
 function main()
