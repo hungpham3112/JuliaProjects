@@ -15,14 +15,20 @@ function version()::String
 end
 
 RAW_VERSION = version()
-JULIA_ENV_DIR = "$(DEPOT_PATH[1])/environments/$RAW_VERSION/"
-
-
+JULIA_ENV_DIR_VERSION = "$(DEPOT_PATH[1])/environments/$RAW_VERSION/"
+JULIA_ENV_DIR = "$(DEPOT_PATH[1])/environments/"
 
 
 function symlink_global_manifest()
     src = "$MY_CONFIG_DIR/GlobalManifest.toml"
     dst = "$JULIA_ENV_DIR/Manifest.toml"
+    if !isdir(JULIA_ENV_DIR)
+        mkdir(JULIA_ENV_DIR)
+        if !isdir(JULIA_ENV_DIR_VERSION)
+            mkdir(JULIA_ENV_DIR_VERSION)
+        end
+    end
+
 
     if isfile(dst)
         rm(dst)
@@ -37,6 +43,13 @@ end
 function symlink_global_project()
     src = "$MY_CONFIG_DIR/GlobalProject.toml"
     dst = "$JULIA_ENV_DIR/Project.toml"
+
+    if !isdir(JULIA_ENV_DIR)
+        mkdir(JULIA_ENV_DIR)
+        if !isdir(JULIA_ENV_DIR_VERSION)
+            mkdir(JULIA_ENV_DIR_VERSION)
+        end
+    end
 
     if isfile(dst)
         rm(dst)
